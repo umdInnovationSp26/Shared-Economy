@@ -22,7 +22,7 @@ function Router() {
       
       {/* Protected Routes Wrapper */}
       <Route>
-        <Layout>
+        <Layout> {/*Sidebar == Layout!!*/}
           <Switch>
             <Route path="/home" component={Home} />
             <Route path="/tasks" component={Tasks} />
