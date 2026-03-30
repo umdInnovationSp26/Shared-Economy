@@ -1,7 +1,22 @@
 import firebase_admin
-from firebase_admin import credentials
+from firebase_admin import credentials, firestore
 
-cred = credentials.Certificate(r"C:\Users\danie\PycharmProjects\Shared-Economy\TimeBankApp\serviceAccountKey.json")
+cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
-print("Connected!")
+db = firestore.client()
+
+# test write
+doc_ref = db.collection("test").document("connection")
+doc_ref.set({
+    "status": "working",
+    "project": "TimeBankApp"
+})
+
+# test read
+doc = doc_ref.get()
+if doc.exists:
+    print("Connected to Firestore!")
+    print(doc.to_dict())
+else:
+    print("Document does not exist.")
