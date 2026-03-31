@@ -2,11 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowRight, HeartHandshake, Leaf, BookOpen, PenTool, ShieldCheck, Star } from "lucide-react";
-import heroImage from "@/assets/images/hero-community.jpg";
-import gardeningImage from "@/assets/images/service-gardening.jpg";
-import teachingImage from "@/assets/images/service-teaching.jpg";
+import heroImage from "@/assets/images/tools.png"; //  Placeholder image for hero section
+import gardeningImage from "@/assets/images/gardening.png";
+import teachingImage from "@/assets/images/tutoring.png";
 
-export default function Home() {
+export default function About() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Hero Section */}

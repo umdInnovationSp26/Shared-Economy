@@ -1,10 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { Home, ListTodo, PlusSquare, MessageSquare, Settings, Clock, Menu } from "lucide-react";
+import { Home, CircleQuestionMarkIcon, ListTodo, PlusSquare, MessageSquare, Settings, Clock, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const NAV_ITEMS = [
   { icon: Home, label: "Home", href: "/home" },
+  { icon: CircleQuestionMarkIcon, label: "About", href: "/about" },
   { icon: ListTodo, label: "Available Tasks", href: "/tasks" },
   { icon: PlusSquare, label: "New Post", href: "/new-post" },
   { icon: MessageSquare, label: "Chat", href: "/chat" },
