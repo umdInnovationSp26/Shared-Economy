@@ -8,6 +8,7 @@ import { TaskProvider } from "@/lib/TaskContext";
 
 import { Layout } from "@/components/layout";
 import Home from "@/pages/home";
+import About from "@/pages/about";
 import Tasks from "@/pages/tasks";
 import NewPost from "@/pages/new-post";
 import Chat from "@/pages/chat";
@@ -25,6 +26,7 @@ function Router() {
         <Layout>
           <Switch>
             <Route path="/home" component={Home} />
+            <Route path="/about" component={About} />
             <Route path="/tasks" component={Tasks} />
             <Route path="/new-post" component={NewPost} />
             <Route path="/chat" component={Chat} />
