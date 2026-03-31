@@ -6,6 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { TaskProvider } from "@/lib/TaskContext";
 
+// Import firebaseApp to ensure initialization
+import { firebaseApp } from "./lib/firebase";
+
 import { Layout } from "@/components/layout";
 import Home from "@/pages/home";
 import About from "@/pages/about";
@@ -23,7 +26,7 @@ function Router() {
       
       {/* Protected Routes Wrapper */}
       <Route>
-        <Layout>
+        <Layout> {/*Sidebar == Layout!!*/}
           <Switch>
             <Route path="/home" component={Home} />
             <Route path="/about" component={About} />
