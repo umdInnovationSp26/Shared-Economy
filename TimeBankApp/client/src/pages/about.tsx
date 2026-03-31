@@ -1,4 +1,3 @@
-import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +9,6 @@ import teachingImage from "@/assets/images/service-teaching.jpg";
 export default function Home() {
   return (
     <div className="min-h-screen bg-background pb-24">
-      <Navbar />
-      
       {/* Hero Section */}
       <section className="pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden relative">
         <div className="container mx-auto px-4 relative z-10">
