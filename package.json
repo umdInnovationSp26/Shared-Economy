@@ -1,0 +1,20 @@
+{
+  "name": "shared-economy",
+  "version": "1.0.0",
+  "description": "This repository is used for coursework in CS 4132/5132 at the University of Minnesota Duluth.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.umn.edu/umdInnovation-sp26/Shared-Economy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "firebase": "^12.11.0"
+  }
+}
