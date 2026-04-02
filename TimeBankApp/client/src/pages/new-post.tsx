@@ -59,7 +59,7 @@ export default function NewPost() {
       radius
     });
     
-    // Simulate API delay
+    // Simulate API delay FIREBASE IMPLEMENTATION HERE!!
     setTimeout(() => {
       setIsSubmitting(false);
       toast({
