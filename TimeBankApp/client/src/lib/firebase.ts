@@ -1,15 +1,25 @@
-// Firebase configuration and initialization
-// Replace the below config with your own Firebase project credentials
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import firebase from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAD-RZ3w98THWH5mUA31D5rAvN8a4ryU1U",
+  authDomain: "neighbors-helping-neighbors.firebaseapp.com",
+  databaseURL: "https://neighbors-helping-neighbors-default-rtdb.firebaseio.com",
+  projectId: "neighbors-helping-neighbors",
+  storageBucket: "neighbors-helping-neighbors.firebasestorage.app",
+  messagingSenderId: "77918003040",
+  appId: "1:77918003040:web:fd8ec163dc3a39bfc70805",
+  measurementId: "G-K0PV1C5JK1"
 };
 
 // Initialize Firebase
-export const firebaseApp = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
