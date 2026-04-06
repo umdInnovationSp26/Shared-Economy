@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,26 +19,42 @@ export default function Settings() {
     <div className="p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Settings</h1>
-        <p className="text-muted-foreground">Manage your profile and account preferences.</p>
+        <p className="text-muted-foreground">
+          Manage your profile and account preferences.
+        </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
-        
         {/* Settings Navigation */}
         <div className="w-full md:w-64 space-y-1">
-          <Button variant="secondary" className="w-full justify-start font-medium bg-secondary text-secondary-foreground">
+          <Button
+            variant="secondary"
+            className="w-full justify-start font-medium bg-secondary text-secondary-foreground"
+          >
             <User className="mr-2 h-4 w-4" /> Profile
           </Button>
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+          >
             <Bell className="mr-2 h-4 w-4" /> Notifications
           </Button>
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+          >
             <Lock className="mr-2 h-4 w-4" /> Privacy & Security
           </Button>
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+          >
             <Shield className="mr-2 h-4 w-4" /> Trust & Verification
           </Button>
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+          >
             <CreditCard className="mr-2 h-4 w-4" /> TimeBank Ledger
           </Button>
         </div>
@@ -42,12 +64,16 @@ export default function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>Public Profile</CardTitle>
-              <CardDescription>This is how others in the TimeBank community will see you.</CardDescription>
+              <CardDescription>
+                This is how others in the TimeBank community will see you.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center gap-6">
                 <Avatar className="h-20 w-20 border-2 border-primary/20">
-                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">JD</AvatarFallback>
+                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                    JD
+                  </AvatarFallback>
                 </Avatar>
                 <Button variant="outline">Change Avatar</Button>
               </div>
@@ -65,17 +91,22 @@ export default function Settings() {
 
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
-                <Textarea 
-                  id="bio" 
+                <Textarea
+                  id="bio"
                   defaultValue="Enthusiastic gardener and DIY repair hobbyist. I love helping neighbors and learning new skills!"
                   className="h-24"
                 />
-                <p className="text-xs text-muted-foreground">Brief description for your profile.</p>
+                <p className="text-xs text-muted-foreground">
+                  Brief description for your profile.
+                </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="skills">Key Skills (Comma separated)</Label>
-                <Input id="skills" defaultValue="Gardening, Basic Carpentry, Cooking" />
+                <Input
+                  id="skills"
+                  defaultValue="Gardening, Basic Carpentry, Cooking"
+                />
               </div>
             </CardContent>
           </Card>
@@ -89,7 +120,9 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base">Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive emails for new messages and task updates.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receive emails for new messages and task updates.
+                  </p>
                 </div>
                 <Switch defaultChecked />
               </div>
@@ -97,7 +130,9 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base">Proximity Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Get notified when a new task is posted near you.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when a new task is posted near you.
+                  </p>
                 </div>
                 <Switch defaultChecked />
               </div>
@@ -105,7 +140,9 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base">Show exact location</Label>
-                  <p className="text-sm text-muted-foreground">Allow others to see your exact address when matching tasks.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Allow others to see your exact address when matching tasks.
+                  </p>
                 </div>
                 <Switch />
               </div>
