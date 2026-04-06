@@ -1,15 +1,46 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, ArrowUpRight, ArrowDownRight, MapPin, Search } from "lucide-react";
+import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
 import toolsImg from "@/assets/images/tools.png";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Home() {
+  const [displayName, setDisplayName] = useState("");
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          setDisplayName(data.displayName || "User");
+        } else {
+          setDisplayName("User");
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setDisplayName("User");
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Header section */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back, Jane! 👋</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">
+          Welcome back, {displayName || "User"}! 👋
+        </h1>
         <p className="text-muted-foreground">Here's your TimeBank summary for this week.</p>
       </div>
 

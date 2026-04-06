@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-console.log(auth);
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,10 +25,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Clock } from "lucide-react";
 
-export default function Login() {
+export default function AuthPage() {
   const [, setLocation] = useLocation();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -31,10 +42,41 @@ export default function Login() {
     setErrorMessage("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (isSignUp) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          email: user.email ?? "",
+          displayName: displayName || "New User",
+          credits: 0,
+          bio: "",
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        // Optional safety: create profile if missing
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email ?? "",
+            displayName: user.email?.split("@")[0] ?? "User",
+            credits: 0,
+            bio: "",
+            createdAt: serverTimestamp(),
+          });
+        }
+      }
+
       setLocation("/home");
     } catch (error: any) {
-      setErrorMessage(error.message || "Login failed");
+      setErrorMessage(error.message || "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +97,9 @@ export default function Login() {
               TimeBank
             </CardTitle>
             <CardDescription className="text-base">
-              Exchange services and build community.
+              {isSignUp
+                ? "Create your profile and join the community."
+                : "Sign in to your account."}
             </CardDescription>
           </div>
         </CardHeader>
@@ -63,6 +107,19 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Display Name</Label>
+                  <Input
+                    id="displayName"
+                    placeholder="Your name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="bg-white/50 focus:bg-white transition-colors"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -77,17 +134,7 @@ export default function Login() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="text-sm font-medium text-primary hover:underline"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    Forgot password?
-                  </a>
-                </div>
-
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -108,23 +155,30 @@ export default function Login() {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading
+                ? isSignUp
+                  ? "Creating account..."
+                  : "Signing in..."
+                : isSignUp
+                  ? "Create Account"
+                  : "Sign In"}
             </Button>
           </form>
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-4 border-t pt-6 bg-muted/20">
           <div className="text-sm text-center text-muted-foreground">
-            Don&apos;t have an account?{" "}
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <a
               href="#"
               className="text-primary font-medium hover:underline"
               onClick={(e) => {
                 e.preventDefault();
-                setLocation("/auth");
+                setIsSignUp(!isSignUp);
+                setErrorMessage("");
               }}
             >
-              Join your community
+              {isSignUp ? "Sign in" : "Create one"}
             </a>
           </div>
         </CardFooter>
