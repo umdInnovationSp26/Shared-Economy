@@ -47,7 +47,7 @@ function SidebarContent() {
             <p className="text-xs text-muted-foreground">12 hrs available</p>
           </div>
         </div>
-        <Link href="/auth">
+        <Link href="/">
           <Button className="w-full justify-center bg-primary text-primary-foreground border-none shadow-md font-bold hover:bg-primary/90">
             Sign Out
           </Button>
