@@ -1,5 +1,17 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,19 +25,61 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Clock } from "lucide-react";
 
-export default function Login() {
+export default function AuthPage() {
   const [, setLocation] = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage("");
 
-    // Simulate login delay
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      if (isSignUp) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          email: user.email ?? "",
+          displayName: displayName || "New User",
+          credits: 0,
+          bio: "",
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        // Optional safety: create profile if missing
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email ?? "",
+            displayName: user.email?.split("@")[0] ?? "User",
+            credits: 0,
+            bio: "",
+            createdAt: serverTimestamp(),
+          });
+        }
+      }
+
       setLocation("/home");
-    }, 800);
+    } catch (error: any) {
+      setErrorMessage(error.message || "Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,12 +91,15 @@ export default function Login() {
           <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-2">
             <Clock className="h-8 w-8 text-primary" />
           </div>
+
           <div className="space-y-2">
             <CardTitle className="text-3xl font-display text-primary tracking-tight">
               TimeBank
             </CardTitle>
             <CardDescription className="text-base">
-              Exchange services and build community.
+              {isSignUp
+                ? "Create your profile and join the community."
+                : "Sign in to your account."}
             </CardDescription>
           </div>
         </CardHeader>
@@ -50,57 +107,78 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Display Name</Label>
+                  <Input
+                    id="displayName"
+                    placeholder="Your name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="bg-white/50 focus:bg-white transition-colors"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="username">Username or Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="username"
+                  id="email"
+                  type="email"
                   placeholder="name@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="bg-white/50 focus:bg-white transition-colors"
                 />
               </div>
+
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="text-sm font-medium text-primary hover:underline"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    Forgot password?
-                  </a>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="bg-white/50 focus:bg-white transition-colors"
                 />
               </div>
             </div>
+
+            {errorMessage && (
+              <p className="text-sm text-red-500">{errorMessage}</p>
+            )}
 
             <Button
               className="w-full text-base h-11 font-medium"
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading
+                ? isSignUp
+                  ? "Creating account..."
+                  : "Signing in..."
+                : isSignUp
+                  ? "Create Account"
+                  : "Sign In"}
             </Button>
           </form>
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-4 border-t pt-6 bg-muted/20">
           <div className="text-sm text-center text-muted-foreground">
-            Don't have an account?{" "}
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <a
               href="#"
               className="text-primary font-medium hover:underline"
               onClick={(e) => {
                 e.preventDefault();
-                setLocation("/auth"); // Optional hook for register route
+                setIsSignUp(!isSignUp);
+                setErrorMessage("");
               }}
             >
-              Join your community
+              {isSignUp ? "Sign in" : "Create one"}
             </a>
           </div>
         </CardFooter>
