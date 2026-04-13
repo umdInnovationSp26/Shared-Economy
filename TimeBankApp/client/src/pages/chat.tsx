@@ -125,12 +125,19 @@ export default function Chat() {
       <div className="w-80 border-r bg-card/50 flex flex-col h-full flex-shrink-0 hidden md:flex">
         <div className="p-4 border-b flex justify-between items-center bg-card">
           <h2 className="font-semibold text-lg">Messages</h2>
-          <Button variant="ghost" size="icon" className="rounded-full bg-secondary/50 hover:bg-secondary">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-secondary/50 hover:bg-secondary"
+          >
             <Plus className="h-5 w-5 text-secondary-foreground" />
           </Button>
         </div>
         <div className="p-2">
-          <Input placeholder="Search conversations..." className="bg-background h-9 text-sm" />
+          <Input
+            placeholder="Search conversations..."
+            className="bg-background h-9 text-sm"
+          />
         </div>
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
@@ -144,7 +151,13 @@ export default function Chat() {
               >
                 <div className="relative">
                   <Avatar className="h-10 w-10 border border-background">
-                    <AvatarFallback className={chat.isGroup ? "bg-blue-100 text-blue-700" : "bg-primary/20 text-primary"}>
+                    <AvatarFallback
+                      className={
+                        chat.isGroup
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-primary/20 text-primary"
+                      }
+                    >
                       {chat.avatar}
                     </AvatarFallback>
                   </Avatar>
@@ -178,21 +191,34 @@ export default function Chat() {
         <div className="h-16 border-b flex items-center justify-between px-6 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
-              <AvatarFallback className={activeChat.isGroup ? "bg-blue-100 text-blue-700" : "bg-primary/20 text-primary"}>
+              <AvatarFallback
+                className={
+                  activeChat.isGroup
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-primary/20 text-primary"
+                }
+              >
                 {activeChat.avatar}
               </AvatarFallback>
             </Avatar>
             <div>
               <h3 className="font-semibold text-sm">{activeChat.name}</h3>
               <p className="text-xs text-muted-foreground flex items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Online
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>{" "}
+                Online
               </p>
             </div>
           </div>
           <div className="flex gap-2 text-muted-foreground">
-            <Button variant="ghost" size="icon" className="h-8 w-8"><Phone className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8"><Video className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8"><Info className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Phone className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Video className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Info className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -257,6 +283,7 @@ export default function Chat() {
               placeholder="Type a message..."
               className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-10"
             />
+            <Button
             <Button
               type="submit"
               size="icon"
