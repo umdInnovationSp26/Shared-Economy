@@ -48,21 +48,50 @@ const STATIC_CHATS: Chat[] = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Chat() {
-  const currentUserId = auth.currentUser?.uid ?? "me"; // replace with real auth
+  const currentUserId = auth.currentUser?.uid;
 
   const [chats, setChats] = useState<Chat[]>(STATIC_CHATS);
   const [activeChat, setActiveChat] = useState<Chat>(STATIC_CHATS[0]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+  const [loadingChats, setLoadingChats] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // ── 1. Subscribe to messages for the active chat ───────────────────────────
+  // 1. Load this user's chats in real-time
   useEffect(() => {
+    if (!currentUserId) return;
+
+    const chatsRef = collection(db, "users", currentUserId, "chats");
+    const q = query(chatsRef, orderBy("lastMessageTime", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })) as Chat[];
+
+      setChats(fetched);
+      setLoadingChats(false);
+
+      // Auto-select first chat if none selected
+      setActiveChat((prev) => prev ?? fetched[0] ?? null);
+    });
+
+    return () => unsubscribe();
+  }, [currentUserId]);
+
+  // ── 2. Subscribe to messages for the active chat ───────────────────────────
+  useEffect(() => {
+    if (!currentUserId || !activeChat) return;
+
     setLoadingMessages(true);
     setMessages([]);
 
-    const messagesRef = collection(db, "chats", activeChat.id, "messages");
+    const messagesRef = collection(
+      db, "users", currentUserId, "chats", activeChat.id, "messages"
+    );
+    
     const q = query(messagesRef, orderBy("timestamp", "asc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -76,22 +105,24 @@ export default function Chat() {
     });
 
     return () => unsubscribe(); // cleanup on chat switch
-  }, [activeChat.id]);
+  }, [activeChat.id, activeChat?.id]);
 
-  // ── 2. Auto-scroll to bottom when messages update ─────────────────────────
+  // ── 3. Auto-scroll to bottom when messages update ─────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── 3. Send a message ─────────────────────────────────────────────────────
+  // ── 4. Send a message ─────────────────────────────────────────────────────
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !currentUserId || !activeChat) return;
 
     const text = message.trim();
     setMessage("");
 
-    const messagesRef = collection(db, "chats", activeChat.id, "messages");
+    const messagesRef = collection(
+      db, "users", currentUserId, "chats", activeChat.id, "messages"
+    );
 
     // Add the message
     await addDoc(messagesRef, {
@@ -101,7 +132,7 @@ export default function Chat() {
     });
 
     // Update chat's lastMessage metadata
-    const chatRef = doc(db, "chats", activeChat.id);
+    const chatRef = doc(db, "users", currentUserId, "chats", activeChat.id);
     await updateDoc(chatRef, {
       lastMessage: text,
       lastMessageTime: serverTimestamp(),
@@ -283,7 +314,6 @@ export default function Chat() {
               placeholder="Type a message..."
               className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 h-10"
             />
-            <Button
             <Button
               type="submit"
               size="icon"
