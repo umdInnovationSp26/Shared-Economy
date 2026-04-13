@@ -1,23 +1,13 @@
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { Clock, MapPin, Search, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTasks } from "@/lib/TaskContext";
+import { Dialog, DialogTrigger, DialogTitle, DialogContent, DialogClose, DialogOverlay, DialogPortal, DialogDescription } from "@/components/ui/dialog";
+import "./tasks.css"
 
 export default function Tasks() {
   const [search, setSearch] = useState("");
@@ -98,14 +88,29 @@ export default function Tasks() {
                 {task.description}
               </p>
             </CardContent>
-            <CardFooter className="p-4 pt-0 flex justify-between items-center border-t mt-auto">
+            <CardFooter className="p-2 flex justify-between items-center border-t mt-auto">
               <div className="flex items-center text-sm font-bold text-primary">
                 <Clock className="h-4 w-4 mr-1.5" /> {task.hours} hr
                 {task.hours > 1 ? "s" : ""}
               </div>
-              <Button variant="outline" size="sm" className="rounded-full">
-                View Details
-              </Button>
+              <Dialog>
+                <DialogTrigger >
+                  <Button size="sm" className="rounded-full primary">
+                    View Details
+                  </Button>
+                </DialogTrigger>
+                <DialogPortal>
+                  <DialogOverlay>
+                    <DialogContent>
+                      <DialogTitle>{task.title}</DialogTitle>
+                      <DialogDescription>{task.description}</DialogDescription>
+                      <DialogClose>
+                        <Button size="sm" className="rounded-full take-task-btn">Take on this task</Button>
+                      </DialogClose>
+                    </DialogContent>
+                  </DialogOverlay>
+                </DialogPortal>
+              </Dialog>
             </CardFooter>
           </Card>
         ))}

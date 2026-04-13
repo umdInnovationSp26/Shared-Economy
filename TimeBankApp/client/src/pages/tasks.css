@@ -1,0 +1,14 @@
+
+/* Custom styles for 'Take on this task' button */
+.take-task-btn {
+	transition: box-shadow 0.2s, transform 0.2s, background 0.2s, color 0.2s;
+}
+.take-task-btn:hover {
+	box-shadow: 0 4px 20px 0 rgba(0,0,0,0.12), 0 1.5px 6px 0 rgba(0,0,0,0.10);
+	transform: translateY(-2px) scale(1.03);
+}
+.take-task-btn:active {
+	background: #fce5bc !important; 
+	color: #000000 !important;
+	border-color: #fce5bc !important;
+}
