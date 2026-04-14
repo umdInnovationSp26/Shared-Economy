@@ -7,6 +7,7 @@ import { Send, Phone, Video, Info, Plus, Loader2 } from "lucide-react";
 import {
   collection, query, orderBy, onSnapshot,
   addDoc, serverTimestamp, doc, setDoc,
+  where,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import NewChatModal from "@/components/ui/new-chat-modal";
@@ -57,8 +58,11 @@ export default function Chat() {
   useEffect(() => {
     if (!currentUserId) return;
 
-    const chatsRef = collection(db, "users", currentUserId, "chats");
-    const q = query(chatsRef, orderBy("lastMessageTime", "desc"));
+    const chatsRef = collection(db, "chats");
+    const q = query(chatsRef, 
+      where("participantIds", "array-contains", currentUserId),
+      orderBy("lastMessageTime", "desc")
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetched = snapshot.docs.map((d) => ({
@@ -82,7 +86,7 @@ export default function Chat() {
     setMessages([]);
 
     const messagesRef = collection(
-      db, "users", currentUserId, "chats", activeChat.id, "messages"
+      db, "chats", activeChat.id, "messages"
     );
     const q = query(messagesRef, orderBy("timestamp", "asc"));
 
@@ -113,7 +117,7 @@ export default function Chat() {
     setMessage("");
 
     const messagesRef = collection(
-      db, "users", currentUserId, "chats", activeChat.id, "messages"
+      db, "chats", activeChat.id, "messages"
     );
 
     // Add the message
@@ -124,7 +128,7 @@ export default function Chat() {
     });
 
     // Update chat's lastMessage metadata
-    const chatRef = doc(db, "users", currentUserId, "chats", activeChat.id);
+    const chatRef = doc(db, "chats", activeChat.id);
     await setDoc(chatRef, {
       lastMessage: text,
       lastMessageTime: serverTimestamp(),
