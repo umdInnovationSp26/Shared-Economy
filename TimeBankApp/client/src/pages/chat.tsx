@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Phone, Video, Info, Plus, Loader2 } from "lucide-react";
 import {
   collection, query, orderBy, onSnapshot,
-  addDoc, serverTimestamp, doc, setDoc,
+  addDoc, serverTimestamp, doc, updateDoc,
   where,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
@@ -129,7 +129,7 @@ export default function Chat() {
 
     // Update chat's lastMessage metadata
     const chatRef = doc(db, "chats", activeChat.id);
-    await setDoc(chatRef, {
+    await updateDoc(chatRef, {
       lastMessage: text,
       lastMessageTime: serverTimestamp(),
     });
