@@ -13,19 +13,20 @@ import Tasks from "@/pages/tasks";
 import NewPost from "@/pages/new-post";
 import Chat from "@/pages/chat";
 import Settings from "@/pages/settings";
-import Auth from "@/pages/auth";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 
 function Router() {
   return (
     <Switch>
+      {/* Public Routes */}
       <Route path="/" component={About} />
-      <Route path="/auth" component={Auth} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
 
       {/* Protected Routes Wrapper */}
       <Route>
         <Layout>
-          {" "}
-          {/*Sidebar == Layout!!*/}
           <Switch>
             <Route path="/home" component={Home} />
             <Route path="/about" component={About} />
