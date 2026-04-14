@@ -1,5 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Home, CircleQuestionMarkIcon, ListTodo, PlusSquare, MessageSquare, Settings, Clock, Menu } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -13,7 +15,7 @@ const NAV_ITEMS = [
 ];
 
 function SidebarContent() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
   return (
     <div className="flex h-full flex-col bg-card border-r">
@@ -47,11 +49,21 @@ function SidebarContent() {
             <p className="text-xs text-muted-foreground">12 hrs available</p>
           </div>
         </div>
-        <Link href="/">
-          <Button className="w-full justify-center bg-primary text-primary-foreground border-none shadow-md font-bold hover:bg-primary/90">
-            Sign Out
-          </Button>
-        </Link>
+        <Button
+          onClick={async () => {
+            try {
+              const { signOut } = await import("firebase/auth");
+              const { auth } = await import("@/lib/firebase");
+              await signOut(auth);
+              setLocation("/");
+            } catch (error) {
+              console.error("Sign out failed:", error);
+            }
+          }}
+          className="w-full justify-center bg-primary text-primary-foreground border-none shadow-md font-bold hover:bg-primary/90"
+        >
+          Sign Out
+        </Button>
       </div>
     </div>
   );
