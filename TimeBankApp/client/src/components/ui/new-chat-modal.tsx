@@ -68,7 +68,7 @@ function UserRow({
       <div className="relative shrink-0">
         <Avatar className="h-10 w-10">
           <AvatarFallback className="bg-primary/15 text-primary font-semibold text-sm">
-            {getInitials(user.name)}
+            {/* {getInitials(user.name)} */ "PLACEHOLDER"}
           </AvatarFallback>
         </Avatar>
       </div>
@@ -141,8 +141,8 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
         const [byName, byEmail] = await Promise.all([
           getDocs(query(
             usersRef,
-            where("nameLower", ">=", term),
-            where("nameLower", "<=", term + "\uf8ff")
+            where("displayName", ">=", term),
+            where("displayName", "<=", term + "\uf8ff")
           )),
           getDocs(query(usersRef, where("email", "==", term))),
         ]);
@@ -175,34 +175,16 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
       const chatId = dmChatId(currentUser.uid, otherUser.uid);
 
       // Create for current user (if not exists)
-      const myRef = doc(db, "users", currentUser.uid, "chats", chatId);
+      const myRef = doc(db, "chats", chatId);
       const mySnap = await getDoc(myRef);
       if (!mySnap.exists()) {
         await setDoc(myRef, {
           name: otherUser.name,
-          avatar: getInitials(otherUser.name),
-          participantIds: [currentUser.uid, otherUser.uid],
-          isGroup: false,
-          lastMessage: "",
-          lastMessageTime: serverTimestamp(),
-          unread: 0,
-        });
-      }
-
-      // Create for the other user (if not exists)
-      const myProfile = await getDoc(doc(db, "users", currentUser.uid));
-      const myName = myProfile.data()?.name ?? currentUser.displayName ?? "User";
-
-      const theirRef = doc(db, "users", otherUser.uid, "chats", chatId);
-      const theirSnap = await getDoc(theirRef);
-      if (!theirSnap.exists()) {
-        await setDoc(theirRef, {
-          name: myName,
-          avatar: getInitials(myName),
-          participantIds: [currentUser.uid, otherUser.uid],
-          isGroup: false,
-          lastMessage: "",
-          lastMessageTime: serverTimestamp(),
+        //   avatar: getInitials(otherUser.name),
+            participantIds: [currentUser.uid, otherUser.uid],
+            isGroup: false,
+            lastMessage: "",
+            lastMessageTime: serverTimestamp(),
           unread: 0,
         });
       }
@@ -245,12 +227,9 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
         createdBy: currentUser.uid,
       };
 
-      // Write chat doc into every member's subcollection
-      await Promise.all(
-        allMembers.map((uid) =>
-          setDoc(doc(db, "users", uid, "chats", chatId), chatData)
-        )
-      );
+      await setDoc(doc(db, "chats", chatId), {
+        chatData
+    });
 
       onChatCreated(chatId);
       onClose();
@@ -342,7 +321,7 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
                       key={u.uid}
                       className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-2.5 py-1.5 rounded-full"
                     >
-                      <span>{u.name.split(" ")[0]}</span>
+                      <span>{u.name/*.split(" ")[0]*/}</span>
                       <button
                         onClick={() => toggleUser(u)}
                         className="hover:text-destructive transition-colors"
@@ -393,7 +372,7 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
                         key={u.uid}
                         className="flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full"
                       >
-                        <span>{u.name.split(" ")[0]}</span>
+                        <span>{u.name/*.split(" ")[0]*/}</span>
                         <button
                           onClick={() => toggleUser(u)}
                           className="hover:text-destructive transition-colors"
