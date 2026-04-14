@@ -18,6 +18,35 @@ import {
 import { Clock, MapPin, Search, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTasks } from "@/lib/TaskContext";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogTitle,
+  DialogContent,
+  DialogClose,
+  DialogOverlay,
+  DialogPortal,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import "./tasks.css";
+
+import { auth, db } from "@/lib/firebase";
+import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
+
+const handleAssignment = async (taskId: string) => {
+  const user = auth.currentUser;
+  if (!user) return;
+  try {
+    const userRef = doc(db, "users", user.uid);
+    await updateDoc(userRef, {
+      CurrentTasks: arrayUnion(taskId),
+    });
+    console.log("task %s added to user", taskId);
+  } catch (error) {
+    console.error("Error assigning task:", error);
+  }
+};
+
 
 export default function Tasks() {
   const [search, setSearch] = useState("");
@@ -93,19 +122,33 @@ export default function Tasks() {
                 {task.title}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0 flex-1">
-              <p className="text-sm text-muted-foreground line-clamp-3">
-                {task.description}
-              </p>
-            </CardContent>
-            <CardFooter className="p-4 pt-0 flex justify-between items-center border-t mt-auto">
+            <CardFooter className="p-2 flex justify-between items-center border-t mt-auto">
               <div className="flex items-center text-sm font-bold text-primary">
                 <Clock className="h-4 w-4 mr-1.5" /> {task.hours} hr
                 {task.hours > 1 ? "s" : ""}
               </div>
-              <Button variant="outline" size="sm" className="rounded-full">
-                View Details
-              </Button>
+              <Dialog>
+                <DialogTrigger>
+                  <Button size="sm" className="rounded-full primary">
+                    View Details
+                  </Button>
+                </DialogTrigger>
+                <DialogPortal>
+                  <DialogOverlay>
+                    <DialogContent>
+                      <DialogTitle>{task.title}</DialogTitle>
+                      <DialogDescription>{task.description}</DialogDescription>
+                      <Button
+                        size="sm"
+                        className="rounded-full take-task-btn"
+                        onClick={() => handleAssignment(task.id)}
+                      >
+                        Take on this task
+                      </Button>
+                    </DialogContent>
+                  </DialogOverlay>
+                </DialogPortal>
+              </Dialog>
             </CardFooter>
           </Card>
         ))}
