@@ -1,3 +1,9 @@
+import { useEffect, useMemo, useState } from "react";
+import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+
+import { auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import {
   Card,
   CardContent,

@@ -63,7 +63,7 @@ export default function About() {
                 exchanged, just time.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/auth">
+                <Link href="/login">
                   <Button
                     size="lg"
                     className="rounded-full text-base h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
@@ -72,14 +72,17 @@ export default function About() {
                     Login
                   </Button>
                 </Link>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="rounded-full text-base h-14 px-8 border-border bg-white hover:bg-secondary/50 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200"
-                  data-testid="button-hero-secondary"
-                >
-                  Sign Up
-                </Button>
+
+                <Link href="/signup">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full text-base h-14 px-8 border-border bg-white hover:bg-secondary/50 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200"
+                    data-testid="button-hero-secondary"
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
               </div>
 
               <div className="mt-10 flex items-center gap-4 text-sm text-muted-foreground font-medium">
