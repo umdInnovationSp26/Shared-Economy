@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Home, CircleQuestionMarkIcon, ListTodo, PlusSquare, MessageSquare, Settings, Clock, Menu } from "lucide-react";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { signOut, onAuthStateChanged } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const NAV_ITEMS = [
   { icon: Home, label: "Home", href: "/home" },
@@ -16,6 +19,75 @@ const NAV_ITEMS = [
 
 function SidebarContent() {
   const [location, setLocation] = useLocation();
+  const [displayName, setDisplayName] = useState("Jane Doe");
+  const [hoursAvailable, setHoursAvailable] = useState("12 hrs available");
+  const [avatarUrl, setAvatarUrl] = useState("");
+
+  useEffect(() => {
+    let unsubscribeProfile: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = undefined;
+      }
+
+      if (!user) {
+        setDisplayName("Jane Doe");
+        setHoursAvailable("12 hrs available");
+        setAvatarUrl("");
+        return;
+      }
+
+      const userRef = doc(db, "users", user.uid);
+
+      unsubscribeProfile = onSnapshot(
+        userRef,
+        (userSnap) => {
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+
+            setDisplayName(
+              data.displayName || user.displayName || user.email?.split("@")[0] || "Jane Doe"
+            );
+
+            if (typeof data.credits === "number") {
+              setHoursAvailable(`${data.credits} hrs available`);
+            } else {
+              setHoursAvailable("12 hrs available");
+            }
+
+            setAvatarUrl(data.avatarUrl || user.photoURL || "");
+          } else {
+            setDisplayName(user.displayName || user.email?.split("@")[0] || "Jane Doe");
+            setHoursAvailable("12 hrs available");
+            setAvatarUrl(user.photoURL || "");
+          }
+        },
+        (error) => {
+          console.error("Failed to load user profile:", error);
+          setDisplayName(user.displayName || user.email?.split("@")[0] || "Jane Doe");
+          setHoursAvailable("12 hrs available");
+          setAvatarUrl(user.photoURL || "");
+        }
+      );
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
+  }, []);
+
+  const initials = displayName
+    ? displayName
+        .trim()
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "JD";
 
   return (
     <div className="flex h-full flex-col bg-card border-r">
@@ -41,19 +113,20 @@ function SidebarContent() {
       </div>
       <div className="p-6 border-t mt-auto">
         <div className="flex items-center gap-3 mb-4">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-            JD
-          </div>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback className="bg-primary/10 text-primary font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
           <div>
-            <p className="text-sm font-semibold">Jane Doe</p>
-            <p className="text-xs text-muted-foreground">12 hrs available</p>
+            <p className="text-sm font-semibold">{displayName}</p>
+            <p className="text-xs text-muted-foreground">{hoursAvailable}</p>
           </div>
         </div>
         <Button
           onClick={async () => {
             try {
-              const { signOut } = await import("firebase/auth");
-              const { auth } = await import("@/lib/firebase");
               await signOut(auth);
               setLocation("/");
             } catch (error) {
