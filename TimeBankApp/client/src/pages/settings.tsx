@@ -19,7 +19,16 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Bell, Lock, Shield, CreditCard, Save } from "lucide-react";
 
+type SettingsTab =
+  | "profile"
+  | "notifications"
+  | "privacy"
+  | "trust"
+  | "ledger";
+
 export default function Settings() {
+  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
+
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,9 +42,14 @@ export default function Settings() {
   const [proximityAlerts, setProximityAlerts] = useState(true);
   const [showExactLocation, setShowExactLocation] = useState(false);
 
+  const [saveMessage, setSaveMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      setSaveMessage("");
+      setErrorMessage("");
 
       if (!user) {
         setLoading(false);
@@ -67,6 +81,7 @@ export default function Settings() {
         }
       } catch (error) {
         console.error("Failed to load settings:", error);
+        setErrorMessage("Failed to load settings.");
       } finally {
         setLoading(false);
       }
@@ -76,9 +91,14 @@ export default function Settings() {
   }, []);
 
   const handleSave = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      setErrorMessage("You must be signed in to save changes.");
+      return;
+    }
 
     setSaving(true);
+    setSaveMessage("");
+    setErrorMessage("");
 
     try {
       await updateProfile(currentUser, {
@@ -103,8 +123,11 @@ export default function Settings() {
         },
         { merge: true }
       );
+
+      setSaveMessage("Changes saved successfully.");
     } catch (error) {
       console.error("Save failed:", error);
+      setErrorMessage("Failed to save changes.");
     } finally {
       setSaving(false);
     }
@@ -120,11 +143,23 @@ export default function Settings() {
         .toUpperCase()
     : "U";
 
+  const tabButtonClass = (tab: SettingsTab) =>
+    `w-full justify-start font-medium ${
+      activeTab === tab
+        ? "bg-secondary text-secondary-foreground"
+        : "text-muted-foreground hover:text-foreground"
+    }`;
+
   if (loading) {
     return (
       <div className="p-6 md:p-10 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Settings</h1>
-        <p className="text-muted-foreground">Loading your profile and account preferences...</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your profile and account preferences.
+          </p>
+        </div>
+        <p className="text-muted-foreground">Loading settings...</p>
       </div>
     );
   }
@@ -142,32 +177,37 @@ export default function Settings() {
         {/* Settings Navigation */}
         <div className="w-full md:w-64 space-y-1">
           <Button
-            variant="secondary"
-            className="w-full justify-start font-medium bg-secondary text-secondary-foreground"
+            variant={activeTab === "profile" ? "secondary" : "ghost"}
+            className={tabButtonClass("profile")}
+            onClick={() => setActiveTab("profile")}
           >
             <User className="mr-2 h-4 w-4" /> Profile
           </Button>
           <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            variant={activeTab === "notifications" ? "secondary" : "ghost"}
+            className={tabButtonClass("notifications")}
+            onClick={() => setActiveTab("notifications")}
           >
             <Bell className="mr-2 h-4 w-4" /> Notifications
           </Button>
           <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            variant={activeTab === "privacy" ? "secondary" : "ghost"}
+            className={tabButtonClass("privacy")}
+            onClick={() => setActiveTab("privacy")}
           >
             <Lock className="mr-2 h-4 w-4" /> Privacy & Security
           </Button>
           <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            variant={activeTab === "trust" ? "secondary" : "ghost"}
+            className={tabButtonClass("trust")}
+            onClick={() => setActiveTab("trust")}
           >
             <Shield className="mr-2 h-4 w-4" /> Trust & Verification
           </Button>
           <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            variant={activeTab === "ledger" ? "secondary" : "ghost"}
+            className={tabButtonClass("ledger")}
+            onClick={() => setActiveTab("ledger")}
           >
             <CreditCard className="mr-2 h-4 w-4" /> TimeBank Ledger
           </Button>
@@ -175,103 +215,182 @@ export default function Settings() {
 
         {/* Settings Content */}
         <div className="flex-1 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Public Profile</CardTitle>
-              <CardDescription>
-                This is how others in the TimeBank community will see you.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20 border-2 border-primary/20">
-                  <AvatarImage src={avatarUrl} />
-                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <Button variant="outline">Change Avatar</Button>
-              </div>
+          {activeTab === "profile" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Public Profile</CardTitle>
+                <CardDescription>
+                  This is how others in the TimeBank community will see you.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center gap-6">
+                  <Avatar className="h-20 w-20 border-2 border-primary/20">
+                    <AvatarImage src={avatarUrl} />
+                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <Label htmlFor="avatarUrl" className="sr-only">
+                      Avatar URL
+                    </Label>
+                    <Input
+                      id="avatarUrl"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="Paste avatar image URL"
+                    />
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Name</Label>
-                <Input
-                  id="displayName"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Name</Label>
+                  <Input
+                    id="displayName"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="h-24"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Brief description for your profile.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="skills">Key Skills (Comma separated)</Label>
-                <Input
-                  id="skills"
-                  value={skills}
-                  onChange={(e) => setSkills(e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>Manage your app experience.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive emails for new messages and task updates.
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                    id="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    className="h-24"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Brief description for your profile.
                   </p>
                 </div>
-                <Switch
-                  checked={emailNotifications}
-                  onCheckedChange={setEmailNotifications}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">Proximity Alerts</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Get notified when a new task is posted near you.
+
+                <div className="space-y-2">
+                  <Label htmlFor="skills">Key Skills (Comma separated)</Label>
+                  <Input
+                    id="skills"
+                    value={skills}
+                    onChange={(e) => setSkills(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "notifications" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Preferences</CardTitle>
+                <CardDescription>Manage your app experience.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Email Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive emails for new messages and task updates.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={emailNotifications}
+                    onCheckedChange={setEmailNotifications}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Proximity Alerts</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified when a new task is posted near you.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={proximityAlerts}
+                    onCheckedChange={setProximityAlerts}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "privacy" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Privacy & Security</CardTitle>
+                <CardDescription>
+                  Control how your information is shared in the TimeBank community.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Show exact location</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Allow others to see your exact address when matching tasks.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={showExactLocation}
+                    onCheckedChange={setShowExactLocation}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "trust" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Trust & Verification</CardTitle>
+                <CardDescription>
+                  Review your trust and verification status in the community.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-lg border p-4">
+                  <p className="font-medium">Community Status</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Verification tools and trust badges can be added here as this
+                    feature grows.
                   </p>
                 </div>
-                <Switch
-                  checked={proximityAlerts}
-                  onCheckedChange={setProximityAlerts}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">Show exact location</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Allow others to see your exact address when matching tasks.
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "ledger" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>TimeBank Ledger</CardTitle>
+                <CardDescription>
+                  Track your earned and spent hours over time.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-lg border p-4">
+                  <p className="font-medium">Hours Summary</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Ledger history and transaction details can be displayed here.
                   </p>
                 </div>
-                <Switch
-                  checked={showExactLocation}
-                  onCheckedChange={setShowExactLocation}
-                />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
+
+          {(saveMessage || errorMessage) && (
+            <div className="flex justify-end">
+              <p
+                className={
+                  errorMessage
+                    ? "text-sm text-red-500"
+                    : "text-sm text-green-600"
+                }
+              >
+                {errorMessage || saveMessage}
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end">
             <Button className="gap-2" onClick={handleSave} disabled={saving}>
