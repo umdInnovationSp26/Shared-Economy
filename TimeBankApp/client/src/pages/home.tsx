@@ -38,7 +38,7 @@ export default function Home() {
       {/* Header section */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight mb-2">
-          Welcome back, {displayName || "User"}! 👋
+          Welcome back, Jane!{/*{displayName || "User"}!*/} 👋
         </h1>
         <p className="text-muted-foreground">Here's your TimeBank summary for this week.</p>
 

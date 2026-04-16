@@ -134,7 +134,7 @@ export default function Tasks() {
                   </Button>
                 </DialogTrigger>
                 <DialogPortal>
-                  <DialogOverlay>
+                  <DialogOverlay className="backdrop-blur-sm">
                     <DialogContent>
                       <DialogTitle>{task.title}</DialogTitle>
                       <DialogDescription>{task.description}</DialogDescription>
