@@ -6,6 +6,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const NAV_ITEMS = [
   { icon: Home, label: "Home", href: "/home" },
@@ -20,6 +21,7 @@ function SidebarContent() {
   const [location, setLocation] = useLocation();
   const [displayName, setDisplayName] = useState("Jane Doe");
   const [hoursAvailable, setHoursAvailable] = useState("12 hrs available");
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | undefined;
@@ -33,6 +35,7 @@ function SidebarContent() {
       if (!user) {
         setDisplayName("Jane Doe");
         setHoursAvailable("12 hrs available");
+        setAvatarUrl("");
         return;
       }
 
@@ -53,15 +56,19 @@ function SidebarContent() {
             } else {
               setHoursAvailable("12 hrs available");
             }
+
+            setAvatarUrl(data.avatarUrl || user.photoURL || "");
           } else {
             setDisplayName(user.displayName || user.email?.split("@")[0] || "Jane Doe");
             setHoursAvailable("12 hrs available");
+            setAvatarUrl(user.photoURL || "");
           }
         },
         (error) => {
           console.error("Failed to load user profile:", error);
           setDisplayName(user.displayName || user.email?.split("@")[0] || "Jane Doe");
           setHoursAvailable("12 hrs available");
+          setAvatarUrl(user.photoURL || "");
         }
       );
     });
@@ -106,9 +113,12 @@ function SidebarContent() {
       </div>
       <div className="p-6 border-t mt-auto">
         <div className="flex items-center gap-3 mb-4">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-            {initials}
-          </div>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback className="bg-primary/10 text-primary font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
           <div>
             <p className="text-sm font-semibold">{displayName}</p>
             <p className="text-xs text-muted-foreground">{hoursAvailable}</p>
