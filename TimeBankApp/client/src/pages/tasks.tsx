@@ -38,10 +38,19 @@ const handleAssignment = async (taskId: string) => {
   if (!user) return;
   try {
     const userRef = doc(db, "users", user.uid);
+    const taskRef = doc(db,"tasks", taskId);
+
     await updateDoc(userRef, {
       CurrentTasks: arrayUnion(taskId),
     });
     console.log("task %s added to user", taskId);
+
+    await updateDoc(taskRef, {
+      isAssigned: true
+    });
+
+    console.log("task %s set to true", taskId);
+
   } catch (error) {
     console.error("Error assigning task:", error);
   }
@@ -134,17 +143,19 @@ export default function Tasks() {
                   </Button>
                 </DialogTrigger>
                 <DialogPortal>
-                  <DialogOverlay>
+                  <DialogOverlay className="backdrop-blur-sm">
                     <DialogContent>
                       <DialogTitle>{task.title}</DialogTitle>
                       <DialogDescription>{task.description}</DialogDescription>
-                      <Button
-                        size="sm"
-                        className="rounded-full take-task-btn"
-                        onClick={() => handleAssignment(task.id)}
-                      >
-                        Take on this task
-                      </Button>
+                      <DialogClose>
+                        <Button
+                          size="sm"
+                          className="rounded-full take-task-btn"
+                          onClick={() => handleAssignment(task.id)}
+                        >
+                          Take on this task
+                        </Button>
+                      </DialogClose>
                     </DialogContent>
                   </DialogOverlay>
                 </DialogPortal>
