@@ -18,15 +18,19 @@ const handleAssignment = async (taskId: string) => {
   if (!user) return;
   try {
     const userRef = doc(db, "users", user.uid);
+    const taskRef = doc(db,"tasks", taskId);
+
     await updateDoc(userRef, {
       CurrentTasks: arrayUnion(taskId),
     });
     console.log("task %s added to user", taskId);
-
-    const taskRef = doc(db, "tasks", taskId);
+    
     await updateDoc(taskRef, {
       isAssigned: true
-    })
+    });
+
+    console.log("task %s set to true", taskId);
+
   } catch (error) {
     console.error("Error assigning task:", error);
   }

@@ -70,7 +70,7 @@ export default function NewPost() {
       hours: parseFloat(hours),
       category,
       radius,
-      isAssigned: false
+      isAssigned: false,
     });
 
     // Simulate API delay FIREBASE IMPLEMENTATION HERE!!

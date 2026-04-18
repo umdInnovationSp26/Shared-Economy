@@ -102,7 +102,7 @@ export default function SignupPage() {
         </CardContent>
 
         <CardFooter className="text-center">
-          <Button variant="ghost" onClick={() => setLocation("/login")}>
+          <Button className="text-primary" variant="link" onClick={() => setLocation("/login")}>
             Already have an account?
           </Button>
         </CardFooter>
