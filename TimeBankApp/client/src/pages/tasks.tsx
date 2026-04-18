@@ -1,45 +1,17 @@
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { Clock, MapPin, Search, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Task, useTasks } from "@/lib/TaskContext";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogTitle,
-  DialogContent,
-  DialogClose,
-  DialogOverlay,
-  DialogPortal,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Task, } from "@/lib/TaskContext";
+import { Dialog, DialogTrigger, DialogTitle, DialogContent, DialogClose, DialogOverlay, DialogPortal, DialogDescription, } from "@/components/ui/dialog";
 import "./tasks.css";
 
 import { auth, db } from "@/lib/firebase";
-import {
-  arrayUnion,
-  collection,
-  doc,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { arrayUnion, collection, doc, getDocs, query, updateDoc, where, } from "firebase/firestore";
 
 const handleAssignment = async (taskId: string) => {
   const user = auth.currentUser;
@@ -63,6 +35,7 @@ const handleAssignment = async (taskId: string) => {
 export default function Tasks() {
   const [search, setSearch] = useState("");
   const [unassignedTasks, setUnassignedTasks] = useState<Task[]>([]);
+  const [, setLocation] = useLocation()
 
   useEffect(() => {
     async function fetchUnassignedTasks() {
@@ -184,7 +157,7 @@ export default function Tasks() {
                           <Button
                             size="sm"
                             className="rounded-full take-task-btn"
-                            onClick={() => handleAssignment(task.id)}
+                            onClick={() => handleAssignment(task.id).then(() => setLocation("/home"))}
                           >
                             Take on this task
                           </Button>
