@@ -157,25 +157,6 @@ export default function Home() {
               No tasks found.
             </div>
           )}
-
-          <Card className="border border-primary/20 bg-primary/5 shadow-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Carpentry Mentorship</CardTitle>
-              <CardDescription>Providing service to Mark S.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-end">
-                <div className="space-y-1">
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                    In Progress
-                  </span>
-                  <div className="text-sm text-muted-foreground flex items-center mt-2">
-                    <Clock className="mr-1 h-3 w-3" /> 3 hrs locked
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Nearby Available Tasks */}

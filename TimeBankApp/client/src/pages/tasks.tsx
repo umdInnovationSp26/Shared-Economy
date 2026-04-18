@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Clock, MapPin, Search, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useTasks } from "@/lib/TaskContext";
+import { Task, useTasks } from "@/lib/TaskContext";
 import {
   Dialog,
   DialogTrigger,
@@ -31,7 +31,15 @@ import {
 import "./tasks.css";
 
 import { auth, db } from "@/lib/firebase";
-import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  arrayUnion,
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 
 const handleAssignment = async (taskId: string) => {
   const user = auth.currentUser;
@@ -42,15 +50,45 @@ const handleAssignment = async (taskId: string) => {
       CurrentTasks: arrayUnion(taskId),
     });
     console.log("task %s added to user", taskId);
+
+    const taskRef = doc(db, "tasks", taskId);
+    await updateDoc(taskRef, {
+      isAssigned: true
+    })
   } catch (error) {
     console.error("Error assigning task:", error);
   }
 };
 
-
 export default function Tasks() {
   const [search, setSearch] = useState("");
-  const { tasks } = useTasks();
+  const [unassignedTasks, setUnassignedTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    async function fetchUnassignedTasks() {
+      const tasksRef = collection(db, "tasks");
+      const unassignedQuery = query(tasksRef, where("isAssigned", "==", false));
+      const querySnapshot = await getDocs(unassignedQuery);
+
+      return querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          image: data.image,
+          type: data.type,
+          category: data.category,
+          radius: data.radius,
+          hours: data.hours,
+          description: data.description,
+          isAssigned: data.isAssigned,
+        };
+      });
+    }
+    fetchUnassignedTasks().then((tasks) => {
+      setUnassignedTasks(tasks);
+    });
+  }, []);
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -88,71 +126,82 @@ export default function Tasks() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
-        {tasks.map((task) => (
-          <Card
-            key={task.id}
-            className="overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 group"
-          >
-            <div className="h-40 w-full overflow-hidden relative">
-              <img
-                src={task.image}
-                alt={task.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute top-2 left-2 flex gap-2">
-                <Badge
-                  variant={task.type === "Offering" ? "default" : "secondary"}
-                  className="shadow-sm font-semibold"
-                >
-                  {task.type}
-                </Badge>
-              </div>
-            </div>
-            <CardHeader className="p-4 pb-2">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {task.category}
-                </span>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3 mr-1" /> {task.radius}
+      {/*Shows unassigned tasks only*/}
+      {unassignedTasks.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
+          {unassignedTasks.map((task) => (
+            <Card
+              key={task.id}
+              className="overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 group"
+            >
+              <div className="h-40 w-full overflow-hidden relative">
+                <img
+                  src={task.image}
+                  alt={task.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-2 left-2 flex gap-2">
+                  <Badge
+                    variant={task.type === "Offering" ? "default" : "secondary"}
+                    className="shadow-sm font-semibold"
+                  >
+                    {task.type}
+                  </Badge>
                 </div>
               </div>
-              <CardTitle className="text-base line-clamp-1 leading-snug">
-                {task.title}
-              </CardTitle>
-            </CardHeader>
-            <CardFooter className="p-2 flex justify-between items-center border-t mt-auto">
-              <div className="flex items-center text-sm font-bold text-primary">
-                <Clock className="h-4 w-4 mr-1.5" /> {task.hours} hr
-                {task.hours > 1 ? "s" : ""}
-              </div>
-              <Dialog>
-                <DialogTrigger>
-                  <Button size="sm" className="rounded-full primary">
-                    View Details
-                  </Button>
-                </DialogTrigger>
-                <DialogPortal>
-                  <DialogOverlay className="backdrop-blur-sm">
-                    <DialogContent>
-                      <DialogTitle>{task.title}</DialogTitle>
-                      <DialogDescription>{task.description}</DialogDescription>
-                      <Button
-                        size="sm"
-                        className="rounded-full take-task-btn"
-                        onClick={() => handleAssignment(task.id)}
-                      >
-                        Take on this task
-                      </Button>
-                    </DialogContent>
-                  </DialogOverlay>
-                </DialogPortal>
-              </Dialog>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+              <CardHeader className="p-4 pb-2">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {task.category}
+                  </span>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3 mr-1" /> {task.radius}
+                  </div>
+                </div>
+                <CardTitle className="text-base line-clamp-1 leading-snug">
+                  {task.title}
+                </CardTitle>
+              </CardHeader>
+              <CardFooter className="p-2 flex justify-between items-center border-t mt-auto">
+                <div className="flex items-center text-sm font-bold text-primary">
+                  <Clock className="h-4 w-4 mr-1.5" /> {task.hours} hr
+                  {task.hours > 1 ? "s" : ""}
+                </div>
+                <Dialog>
+                  <DialogTrigger>
+                    <Button size="sm" className="rounded-full primary">
+                      View Details
+                    </Button>
+                  </DialogTrigger>
+                  <DialogPortal>
+                    <DialogOverlay className="backdrop-blur-sm">
+                      <DialogContent>
+                        <DialogTitle>{task.title}</DialogTitle>
+                        <DialogDescription>
+                          {task.description}
+                        </DialogDescription>
+                        <DialogClose>
+                          <Button
+                            size="sm"
+                            className="rounded-full take-task-btn"
+                            onClick={() => handleAssignment(task.id)}
+                          >
+                            Take on this task
+                          </Button>
+                        </DialogClose>
+                      </DialogContent>
+                    </DialogOverlay>
+                  </DialogPortal>
+                </Dialog>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-muted-foreground text-center py-4">
+          No tasks found.
+        </div>
+      )}
     </div>
   );
 }

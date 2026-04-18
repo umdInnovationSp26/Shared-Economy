@@ -12,7 +12,8 @@ export type Task = {
   hours: number;
   image: string;
   category: string;
-};
+  isAssigned: boolean
+;};
 
 
 interface TaskContextType {
@@ -39,6 +40,7 @@ useEffect(() => {
         hours: data.hours || 0,
         image: data.image || toolsImg,
         category: data.category || "",
+        isAssigned: false,
       };
     });
 
