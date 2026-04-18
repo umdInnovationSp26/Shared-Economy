@@ -59,6 +59,7 @@ export default function Tasks() {
           hours: data.hours,
           description: data.description,
           isAssigned: data.isAssigned,
+          madeBy: data.madeBy,
         };
       });
     }

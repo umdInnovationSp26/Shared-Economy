@@ -136,7 +136,7 @@ export default function Home() {
                 <Card className="border border-primary/20 bg-primary/5 shadow-none">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">{task.title}</CardTitle>
-                    <CardDescription>{task.description}</CardDescription>
+                    <CardDescription>{task.madeBy.length > 0 ? ("An exchange with " + task.madeBy) : ("No name found")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex justify-between items-end">
