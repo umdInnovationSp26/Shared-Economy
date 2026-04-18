@@ -1,13 +1,24 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
 import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { useTasks } from "@/lib/TaskContext";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
+  const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
+  const { tasks } = useTasks();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -20,13 +31,23 @@ export default function Home() {
 
         if (userSnap.exists()) {
           const data = userSnap.data();
+          console.log("Fetched user document:", data);
           setDisplayName(data.displayName || "User");
+          if (Array.isArray(data.CurrentTasks)) {
+            console.log("CurrentTasks field:", data.CurrentTasks);
+            setUserTaskIds(data.CurrentTasks);
+          } else {
+            console.warn("CurrentTasks field missing or not an array", data.CurrentTasks);
+            setUserTaskIds([]);
+          }
         } else {
           setDisplayName("User");
+          setUserTaskIds([]);
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
         setDisplayName("User");
+        setUserTaskIds([]);
       }
     };
 
@@ -40,8 +61,9 @@ export default function Home() {
         <h1 className="text-3xl font-bold tracking-tight mb-2">
           Welcome back, {displayName || "User"}! 👋
         </h1>
-        <p className="text-muted-foreground">Here's your TimeBank summary for this week.</p>
-
+        <p className="text-muted-foreground">
+          Here's your TimeBank summary for this week.
+        </p>
       </div>
 
       {/* Stats row */}
@@ -109,6 +131,33 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Current Tasks</h2>
           </div>
+          {tasks && userTaskIds.length > 0 ? (
+            tasks.filter((task) => userTaskIds.includes(task.id)).map((task) => (
+                <Card className="border border-primary/20 bg-primary/5 shadow-none">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">{task.title}</CardTitle>
+                    <CardDescription>{task.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-end">
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                          In Progress
+                        </span>
+                        <div className="text-sm text-muted-foreground flex items-center mt-2">
+                          <Clock className="mr-1 h-3 w-3" /> {task.hours} hrs locked
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+          ) : (
+            <div className="text-muted-foreground text-center py-4">
+              No tasks found.
+            </div>
+          )}
+
           <Card className="border border-primary/20 bg-primary/5 shadow-none">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Carpentry Mentorship</CardTitle>
