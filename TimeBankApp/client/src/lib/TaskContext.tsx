@@ -15,7 +15,6 @@ export type Task = {
   isAssigned: boolean;
 };
 
-
 interface TaskContextType {
   tasks: Task[];
   addTask: (task: Omit<Task, "id" | "image">) => Promise<void>;
