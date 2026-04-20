@@ -5,7 +5,7 @@ import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
 import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, arrayRemove, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayRemove, increment, arrayUnion } from "firebase/firestore";
 import { useTasks } from "@/lib/TaskContext";
 import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ export default function Home() {
     const fetchUserProfile = async () => {
       const user = auth.currentUser;
 
-
       if (!user) return;
 
       try {
@@ -42,10 +41,12 @@ export default function Home() {
             console.log("CurrentTasks field:", data.CurrentTasks);
             setUserTaskIds(data.CurrentTasks);
           } else {
-            console.warn("CurrentTasks field missing or not an array", data.CurrentTasks);
+            console.warn(
+              "CurrentTasks field missing or not an array",
+              data.CurrentTasks,
+            );
             setUserTaskIds([]);
           }
-
         } else {
           setDisplayName("User");
           setUserTaskIds([]);
@@ -95,11 +96,13 @@ export default function Home() {
           <CardContent>
             <div className="text-3xl font-bold font-display">
               {tasks
-              .filter((task) => userTaskIds.includes(task.id))
-              .reduce((total, task) => total + task.hours, 0)} hrs
-              </div>
+                .filter((task) => userTaskIds.includes(task.id))
+                .reduce((total, task) => total + task.hours, 0)}{" "}
+              hrs
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {tasks.filter((task) => userTaskIds.includes(task.id)).length} active request
+              {tasks.filter((task) => userTaskIds.includes(task.id)).length}{" "}
+              active request
             </p>
           </CardContent>
         </Card>
@@ -142,11 +145,20 @@ export default function Home() {
             <h2 className="text-xl font-semibold">Current Tasks</h2>
           </div>
           {tasks && userTaskIds.length > 0 ? (
-            tasks.filter((task) => userTaskIds.includes(task.id)).map((task) => (
-                <Card key={task.id} className="border border-primary/20 bg-primary/5 shadow-none">
+            tasks
+              .filter((task) => userTaskIds.includes(task.id))
+              .map((task) => (
+                <Card
+                  key={task.id}
+                  className="border border-primary/20 bg-primary/5 shadow-none"
+                >
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">{task.title}</CardTitle>
-                    <CardDescription>{task.madeBy.length > 0 ? ("An exchange with " + task.madeBy) : ("No name found")}</CardDescription>
+                    <CardDescription>
+                      {task.madeBy.length > 0
+                        ? "An exchange with " + task.madeBy
+                        : "No name found"}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex justify-between items-end">
@@ -155,21 +167,23 @@ export default function Home() {
                           In Progress
                         </span>
                         <div className="text-sm text-muted-foreground flex items-center mt-2">
-                          <Clock className="mr-1 h-3 w-3" /> {task.hours} hrs locked
+                          <Clock className="mr-1 h-3 w-3" /> {task.hours} hrs
+                          locked
                         </div>
                       </div>
                     </div>
                   </CardContent>
-                  
-                      <CardFooter>
-                      <button className="border border-primary text-primary px-3 py-1 rounded-md hover:bg-primary/10"
-                         onClick={() => setSelectedTaskId(task.id)}
-                         >
-                         Mark Complete {selectedTaskId === task.id ? "(selected)" : ""}
-                        </button>
-                      </CardFooter>
-                   </Card>
-               
+
+                  <CardFooter>
+                    <button
+                      className="border border-primary text-primary px-3 py-1 rounded-md hover:bg-primary/10"
+                      onClick={() => setSelectedTaskId(task.id)}
+                    >
+                      Mark Complete{" "}
+                      {selectedTaskId === task.id ? "(selected)" : ""}
+                    </button>
+                  </CardFooter>
+                </Card>
               ))
           ) : (
             <div className="text-muted-foreground text-center py-4">
@@ -255,7 +269,7 @@ export default function Home() {
             </Card>
           </div>
         </div>
-        </div>
+      </div>
 
       {selectedTaskId && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50">
@@ -270,43 +284,50 @@ export default function Home() {
               onChange={(e) => setEnteredHours(e.target.value)}
             />
 
-          <div className="flex gap-2">
-  <button
-    className="w-full bg-primary text-white py-2 rounded-md"
-    onClick={async () => {
-      const user = auth.currentUser;
-      if (!user || !selectedTaskId || !enteredHours) return;
+            <div className="flex gap-2">
+              <button
+                className="w-full bg-primary text-white py-2 rounded-md"
+                onClick={async () => {
+                  const user = auth.currentUser;
+                  if (!user || !selectedTaskId || !enteredHours) return;
 
-      const userRef = doc(db, "users", user.uid);
+                  const userRef = doc(db, "users", user.uid);
 
-      await updateDoc(userRef, {
-        CurrentTasks: arrayRemove(selectedTaskId),
-        credits: increment(Number(enteredHours)),
-      });
+                  await updateDoc(userRef, {
+                    CurrentTasks: arrayRemove(selectedTaskId),
+                    credits: increment(Number(enteredHours)),
+                  });
+                  console.log("task %s successfully removed from Current tasks", selectedTaskId);
 
-      setCredits((prev) => prev + Number(enteredHours));
-      setUserTaskIds((prev) =>
-        prev.filter((id) => id !== selectedTaskId)
-      );
-      setSelectedTaskId(null);
-      setEnteredHours("");
-    }}
-  >
-    Submit
-  </button>
+                  await updateDoc(userRef, {
+                    CompletedTasks: arrayUnion(selectedTaskId),
+                  });
+                  console.log("task %s successfully added to Completed tasks", selectedTaskId);
 
-  <button
-    className="w-full border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-100"
-    onClick={() => {
-      setSelectedTaskId(null);
-      setEnteredHours("");
-    }}
-  >
-    Cancel
-   </button>
-    </div>
-    </div>
-     </div>
+
+                  setCredits((prev) => prev + Number(enteredHours));
+                  setUserTaskIds((prev) =>
+                    prev.filter((id) => id !== selectedTaskId),
+                  );
+                  setSelectedTaskId(null);
+                  setEnteredHours("");
+                }}
+              >
+                Submit
+              </button>
+
+              <button
+                className="w-full border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-100"
+                onClick={() => {
+                  setSelectedTaskId(null);
+                  setEnteredHours("");
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

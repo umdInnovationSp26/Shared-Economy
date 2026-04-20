@@ -39,7 +39,8 @@ export default function LoginPage() {
           credits: 0,
           bio: "",
           createdAt: serverTimestamp(),
-          currentTasks: {}
+          currentTasks: {},
+          compeltedTasks: {},
         });
       }
 

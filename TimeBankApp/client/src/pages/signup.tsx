@@ -41,7 +41,8 @@ export default function SignupPage() {
         credits: 0,
         bio: "",
         createdAt: serverTimestamp(),
-        currentTasks: {}
+        currentTasks: {},
+        completedTasks: {},
       });
 
       setLocation("/home");
