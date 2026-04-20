@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
@@ -14,6 +7,9 @@ import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, arrayRemove, increment } from "firebase/firestore";
 import { useTasks } from "@/lib/TaskContext";
+import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { DialogPortal } from "@radix-ui/react-dialog";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");

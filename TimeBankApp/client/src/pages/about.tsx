@@ -5,16 +5,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Clock,
-  ArrowRight,
-  HeartHandshake,
-  Leaf,
-  BookOpen,
-  PenTool,
-  ShieldCheck,
-  Star,
-} from "lucide-react";
+import { Clock, ArrowRight, HeartHandshake, Leaf, BookOpen, PenTool, ShieldCheck, Star, } from "lucide-react";
 import heroImage from "@/assets/images/tools.png"; //  Placeholder image for hero section
 import gardeningImage from "@/assets/images/gardening.png";
 import teachingImage from "@/assets/images/tutoring.png";

@@ -145,6 +145,8 @@ export default function Tasks() {
                   <Clock className="h-4 w-4 mr-1.5" /> {task.hours} hr
                   {task.hours > 1 ? "s" : ""}
                 </div>
+                
+                {/*Details Modal*/}
                 <Dialog>
                   <DialogTrigger>
                     <Button size="sm" className="rounded-full primary">
