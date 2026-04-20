@@ -17,12 +17,18 @@ import { useTasks } from "@/lib/TaskContext";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
+<<<<<<< HEAD
   const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
   const { tasks } = useTasks();
+=======
+  const [currentTasks, setCurrentTasks] = useState<any[]>([]);
+>>>>>>> f662242 (home page current tasks in progress)
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       const user = auth.currentUser;
+
+
       if (!user) return;
 
       try {
@@ -33,6 +39,7 @@ export default function Home() {
           const data = userSnap.data();
           console.log("Fetched user document:", data);
           setDisplayName(data.displayName || "User");
+<<<<<<< HEAD
           if (Array.isArray(data.CurrentTasks)) {
             console.log("CurrentTasks field:", data.CurrentTasks);
             setUserTaskIds(data.CurrentTasks);
@@ -40,6 +47,23 @@ export default function Home() {
             console.warn("CurrentTasks field missing or not an array", data.CurrentTasks);
             setUserTaskIds([]);
           }
+=======
+            const taskIds = data.CurrentTasks || [];
+             const fetchedTasks = [];
+
+                 for (const taskId of taskIds) {
+                  const taskRef = doc(db, "task", taskId);
+                   const taskSnap = await getDoc(taskRef);
+                  if (taskSnap.exists()) {
+                  fetchedTasks.push({
+                 id: taskSnap.id,
+                 ...taskSnap.data(),
+               });
+             }
+             }
+
+             setCurrentTasks(fetchedTasks);
+>>>>>>> f662242 (home page current tasks in progress)
         } else {
           setDisplayName("User");
           setUserTaskIds([]);
