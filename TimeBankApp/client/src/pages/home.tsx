@@ -12,17 +12,23 @@ import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
 import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayRemove, increment } from "firebase/firestore";
 import { useTasks } from "@/lib/TaskContext";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
+  const [credits, setCredits] = useState(0);
+
   const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
   const { tasks } = useTasks();
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [enteredHours, setEnteredHours] = useState("");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       const user = auth.currentUser;
+
+
       if (!user) return;
 
       try {
@@ -33,6 +39,9 @@ export default function Home() {
           const data = userSnap.data();
           console.log("Fetched user document:", data);
           setDisplayName(data.displayName || "User");
+
+          setCredits(data.credits || 0);
+
           if (Array.isArray(data.CurrentTasks)) {
             console.log("CurrentTasks field:", data.CurrentTasks);
             setUserTaskIds(data.CurrentTasks);
@@ -40,6 +49,7 @@ export default function Home() {
             console.warn("CurrentTasks field missing or not an array", data.CurrentTasks);
             setUserTaskIds([]);
           }
+
         } else {
           setDisplayName("User");
           setUserTaskIds([]);
@@ -75,7 +85,7 @@ export default function Home() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold font-display">12.5 hrs</div>
+            <div className="text-3xl font-bold font-display">{credits} hrs</div>
             <p className="text-xs opacity-80 mt-1">Ready to spend</p>
           </CardContent>
         </Card>
@@ -87,9 +97,13 @@ export default function Home() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold font-display">3 hrs</div>
+            <div className="text-3xl font-bold font-display">
+              {tasks
+              .filter((task) => userTaskIds.includes(task.id))
+              .reduce((total, task) => total + task.hours, 0)} hrs
+              </div>
             <p className="text-xs text-muted-foreground mt-1">
-              1 active request
+              {tasks.filter((task) => userTaskIds.includes(task.id)).length} active request
             </p>
           </CardContent>
         </Card>
@@ -133,7 +147,7 @@ export default function Home() {
           </div>
           {tasks && userTaskIds.length > 0 ? (
             tasks.filter((task) => userTaskIds.includes(task.id)).map((task) => (
-                <Card className="border border-primary/20 bg-primary/5 shadow-none">
+                <Card key={task.id} className="border border-primary/20 bg-primary/5 shadow-none">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">{task.title}</CardTitle>
                     <CardDescription>{task.description}</CardDescription>
@@ -150,7 +164,16 @@ export default function Home() {
                       </div>
                     </div>
                   </CardContent>
-                </Card>
+                  
+                      <CardFooter>
+                      <button className="border border-primary text-primary px-3 py-1 rounded-md hover:bg-primary/10"
+                         onClick={() => setSelectedTaskId(task.id)}
+                         >
+                         Mark Complete {selectedTaskId === task.id ? "(selected)" : ""}
+                        </button>
+                      </CardFooter>
+                   </Card>
+               
               ))
           ) : (
             <div className="text-muted-foreground text-center py-4">
@@ -236,7 +259,59 @@ export default function Home() {
             </Card>
           </div>
         </div>
-      </div>
+        </div>
+
+      {selectedTaskId && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+            <h2 className="text-lg font-bold mb-4">Log Hours</h2>
+
+            <input
+              type="number"
+              placeholder="Enter hours"
+              className="w-full border rounded-md p-2 mb-4"
+              value={enteredHours}
+              onChange={(e) => setEnteredHours(e.target.value)}
+            />
+
+          <div className="flex gap-2">
+  <button
+    className="w-full bg-primary text-white py-2 rounded-md"
+    onClick={async () => {
+      const user = auth.currentUser;
+      if (!user || !selectedTaskId || !enteredHours) return;
+
+      const userRef = doc(db, "users", user.uid);
+
+      await updateDoc(userRef, {
+        CurrentTasks: arrayRemove(selectedTaskId),
+        credits: increment(Number(enteredHours)),
+      });
+
+      setCredits((prev) => prev + Number(enteredHours));
+      setUserTaskIds((prev) =>
+        prev.filter((id) => id !== selectedTaskId)
+      );
+      setSelectedTaskId(null);
+      setEnteredHours("");
+    }}
+  >
+    Submit
+  </button>
+
+  <button
+    className="w-full border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-100"
+    onClick={() => {
+      setSelectedTaskId(null);
+      setEnteredHours("");
+    }}
+  >
+    Cancel
+   </button>
+    </div>
+    </div>
+     </div>
+      )}
     </div>
   );
 }
