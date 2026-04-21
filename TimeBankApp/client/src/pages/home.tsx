@@ -22,6 +22,31 @@ export default function Home() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [enteredHours, setEnteredHours] = useState("");
 
+  const handleCancel = async(taskId:string) => {
+    const user = auth.currentUser;
+
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const taskRef = doc(db,"tasks", taskId);
+
+      await updateDoc(userRef, {
+        currentTasks: arrayRemove(taskId),
+      });
+      console.log("task %s has been removed from current tasks", taskId);
+
+      await updateDoc(taskRef, {
+        isAssigned: false,
+      });
+      console.log("task %s has been unassigned from user %s", user.displayName);
+
+    } catch (e) {
+      console.warn("Unable to remove or unassigned task %s: %s", taskId, e);
+    }
+
+  }
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       const user = auth.currentUser;
@@ -99,11 +124,11 @@ export default function Home() {
             <div className="text-3xl font-bold font-display">
               {tasks
                 .filter((task) => userTaskIds.includes(task.id))
-                .reduce((total, task) => total + task.hours, 0)}{" "}
+                .reduce((total, task) => total + task.hours, 0)}
               hrs
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {tasks.filter((task) => userTaskIds.includes(task.id)).length}{" "}
+              {tasks.filter((task) => userTaskIds.includes(task.id)).length}
               active request
             </p>
           </CardContent>
@@ -146,14 +171,20 @@ export default function Home() {
                     </div>
                   </CardContent>
 
-                  <CardFooter>
-                    <button
-                      className="border border-primary text-primary px-3 py-1 rounded-md hover:bg-primary/10"
-                      onClick={() => setSelectedTaskId(task.id)}
-                    >
-                      Mark Complete{" "}
-                      {selectedTaskId === task.id ? "(selected)" : ""}
-                    </button>
+                  <CardFooter className="justify-end">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button onClick={() => handleCancel(task.id)} variant="outline" className="border-primary text-center text-primary rounded-md hover:bg-primary/10">
+                          Cancel task
+                      </Button>
+                      <Button
+                        variant="default"
+                        className="border-primary rounded-md hover:bg-primary/10"
+                        onClick={() => setSelectedTaskId(task.id)}
+                      >
+                        Mark Complete
+                        {selectedTaskId === task.id ? "(selected)" : ""}
+                      </Button>
+                    </div>
                   </CardFooter>
                 </Card>
               ))
@@ -244,7 +275,7 @@ export default function Home() {
       </div>
 
       {selectedTaskId && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-lg shadow-lg w-80">
             <h2 className="text-lg font-bold mb-4">Log Hours</h2>
 
