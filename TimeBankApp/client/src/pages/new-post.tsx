@@ -1,28 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { PlusSquare, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTasks } from "@/lib/TaskContext";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function NewPost() {
   const { toast } = useToast();
@@ -37,9 +26,35 @@ export default function NewPost() {
   const [hours, setHours] = useState("");
   const [category, setCategory] = useState("");
   const [radius, setRadius] = useState("5 miles");
+  const [madeBy, setMadeBy] = useState("Requesting");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    //check signed in
+    const user = auth.currentUser;
+  if (!user) {
+    toast({
+      title: "Not signed in",
+      description: "You must be signed in to create a post.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+  const data = userSnap.data();
+  if (!data) {
+    toast({
+      title: "User data missing",
+      description: "Could not fetch your user profile.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setMadeBy(data.displayName);
 
     // Basic field verification
     if (!title.trim() || !description.trim() || !hours || !category) {
@@ -71,6 +86,7 @@ export default function NewPost() {
       category,
       radius,
       isAssigned: false,
+      madeBy: data.displayName,
     });
 
     // Simulate API delay FIREBASE IMPLEMENTATION HERE!!

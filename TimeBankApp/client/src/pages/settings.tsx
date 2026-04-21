@@ -3,13 +3,7 @@ import { onAuthStateChanged, updateProfile, User as FirebaseUser } from "firebas
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -228,7 +222,15 @@ export default function Settings() {
                   <Avatar className="h-20 w-20 border-2 border-primary/20">
                     <AvatarImage src={avatarUrl} />
                     <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                      {initials}
+                      {displayName
+                        ? displayName
+                            .trim()
+                            .split("")
+                            .map((part) => part[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()
+                          : "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
