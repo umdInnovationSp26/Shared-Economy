@@ -10,10 +10,12 @@ import { useTasks } from "@/lib/TaskContext";
 import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DialogPortal } from "@radix-ui/react-dialog";
+import { useLocation } from "wouter";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
   const [credits, setCredits] = useState(0);
+  const [,setLocation] = useLocation();
 
   const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
   const { tasks } = useTasks();
@@ -74,7 +76,7 @@ export default function Home() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-12 px-6">
         <Card className="bg-primary text-primary-foreground border-none shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-80">
@@ -103,36 +105,6 @@ export default function Home() {
             <p className="text-xs text-muted-foreground mt-1">
               {tasks.filter((task) => userTaskIds.includes(task.id)).length}{" "}
               active request
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-emerald-500" /> Given (This
-              Week)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold font-display">4 hrs</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              +2 hrs from last week
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <ArrowDownRight className="h-4 w-4 text-blue-500" /> Received
-              (This Week)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold font-display">1.5 hrs</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Lawn mowing service
             </p>
           </CardContent>
         </Card>
@@ -196,7 +168,7 @@ export default function Home() {
         <div className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Available Nearby</h2>
-            <button className="text-sm text-primary hover:underline font-medium">
+            <button onClick={() => setLocation("/tasks")} className="text-sm text-primary hover:underline font-medium">
               View all
             </button>
           </div>

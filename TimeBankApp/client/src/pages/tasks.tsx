@@ -60,6 +60,8 @@ export default function Tasks() {
           description: data.description,
           isAssigned: data.isAssigned,
           madeBy: data.madeBy,
+          isCompleted: data.isCompleted,
+          actualTime: data.actualTime,
         };
       });
     }

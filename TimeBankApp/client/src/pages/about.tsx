@@ -178,8 +178,8 @@ export default function About() {
 
             <Card className="bg-card border-none shadow-sm hover:shadow-md transition-shadow rounded-3xl relative overflow-hidden group">
               <CardContent className="p-8">
-                <div className="w-14 h-14 bg-accent/10 text-accent-foreground rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <span className="text-2xl font-display font-bold text-accent">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{color:"#ffca80", backgroundColor:"#fff4e6"}}>
+                  <span className="text-2xl font-display font-bold">
                     2
                   </span>
                 </div>
