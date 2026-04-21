@@ -14,6 +14,7 @@ import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, arrayRemove, increment } from "firebase/firestore";
 import { useTasks } from "@/lib/TaskContext";
+import { completeTask } from "@/lib/transactions";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
@@ -167,8 +168,27 @@ export default function Home() {
                   
                       <CardFooter>
                       <button className="border border-primary text-primary px-3 py-1 rounded-md hover:bg-primary/10"
-                         onClick={() => setSelectedTaskId(task.id)}
-                         >
+                         onClick={async() => {
+                          const user = auth.currentUser;
+                          if (!user) return;
+
+                          try{
+                            // 1. Write the ledger + update credits + mark task complete
+                            await completeTask(user.uid, task);
+
+                            // 2. Remove task form user's CurrentTasks
+                            const userRef = doc(db, "users", user.uid);
+                            await updateDoc(userRef, {
+                              CurrentTasks: arrayRemove(task.id),
+                            });
+
+                            alert("Task completed!");
+                          } catch (err) {
+                            console.error(err);
+                            alert("Failed to complete task")
+                          }
+                         }} 
+                        >
                          Mark Complete {selectedTaskId === task.id ? "(selected)" : ""}
                         </button>
                       </CardFooter>
