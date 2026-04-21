@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +20,16 @@ import gardeningImage from "@/assets/images/gardening.png";
 import teachingImage from "@/assets/images/tutoring.png";
 
 export default function About() {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Hero Section */}
@@ -62,24 +75,32 @@ export default function About() {
                 Offer what you love doing, get help with what you need. No money
                 exchanged, just time.
               </p>
+
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/auth">
-                  <Button
-                    size="lg"
-                    className="rounded-full text-base h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
-                    data-testid="button-hero-primary"
-                  >
-                    Login
-                  </Button>
-                </Link>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="rounded-full text-base h-14 px-8 border-border bg-white hover:bg-secondary/50 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200"
-                  data-testid="button-hero-secondary"
-                >
-                  Sign Up
-                </Button>
+                {!user && (
+                  <>
+                    <Link href="/login">
+                     <Button
+                        size="lg"
+                        className="rounded-full text-base h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
+                        data-testid="button-hero-primary"
+                      >
+                        Login
+                      </Button>
+                    </Link>
+
+                    <Link href="/signup">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="rounded-full text-base h-14 px-8 border-border bg-white hover:bg-secondary/50 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200"
+                        data-testid="button-hero-secondary"
+                      >
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
 
               <div className="mt-10 flex items-center gap-4 text-sm text-muted-foreground font-medium">

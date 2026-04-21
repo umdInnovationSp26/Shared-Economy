@@ -12,8 +12,8 @@ export type Task = {
   hours: number;
   image: string;
   category: string;
+  isAssigned: boolean;
 };
-
 
 interface TaskContextType {
   tasks: Task[];
@@ -26,7 +26,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
 
 useEffect(() => {
-  const unsubscribe = onSnapshot(collection(db, "task"), (snapshot) => {
+  const unsubscribe = onSnapshot(collection(db, "tasks"), (snapshot) => {
     const firebaseTasks: Task[] = snapshot.docs.map((doc) => {
       const data = doc.data();
 
@@ -39,6 +39,7 @@ useEffect(() => {
         hours: data.hours || 0,
         image: data.image || toolsImg,
         category: data.category || "",
+        isAssigned: false
       };
     });
 
@@ -51,7 +52,7 @@ useEffect(() => {
 
  const addTask = async (newTaskData: Omit<Task, "id" | "image">) => {
   try {
-    await addDoc(collection(db, "task"), {
+    await addDoc(collection(db, "tasks"), {
       ...newTaskData,
       image: toolsImg,
     });
