@@ -48,6 +48,7 @@ export default function SignupPage() {
         credits: 0,
         bio: "",
         createdAt: serverTimestamp(),
+        currentTasks: {}
       });
 
       setLocation("/home");
@@ -101,7 +102,7 @@ export default function SignupPage() {
         </CardContent>
 
         <CardFooter className="text-center">
-          <Button variant="ghost" onClick={() => setLocation("/login")}>
+          <Button className="text-primary" variant="link" onClick={() => setLocation("/login")}>
             Already have an account?
           </Button>
         </CardFooter>

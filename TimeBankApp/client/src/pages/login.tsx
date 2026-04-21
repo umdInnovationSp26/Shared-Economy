@@ -46,6 +46,7 @@ export default function LoginPage() {
           credits: 0,
           bio: "",
           createdAt: serverTimestamp(),
+          currentTasks: {}
         });
       }
 
@@ -93,7 +94,7 @@ export default function LoginPage() {
         </CardContent>
 
         <CardFooter className="text-center">
-          <Button variant="ghost" onClick={() => setLocation("/signup")}>
+          <Button className="text-primary" variant="link" onClick={() => setLocation("/signup")}>
             Create an account
           </Button>
         </CardFooter>
