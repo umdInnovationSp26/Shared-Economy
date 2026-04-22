@@ -173,7 +173,10 @@ export default function Home() {
 
                   <CardFooter className="justify-end">
                     <div className="grid grid-cols-2 gap-3">
-                      <Button onClick={() => handleCancel(task.id)} variant="outline" className="border-primary text-center text-primary rounded-md hover:bg-primary/10">
+                      <Button 
+                      onClick={() => handleCancel(task.id)} 
+                      variant="outline" 
+                      className="border-primary text-center text-primary rounded-md hover:bg-primary/10">
                           Cancel task
                       </Button>
                       <Button
