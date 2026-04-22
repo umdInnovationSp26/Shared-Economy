@@ -28,13 +28,6 @@ export default function About() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="max-w-2xl">
-              <Badge
-                className="mb-6 bg-primary/10 text-primary hover:bg-primary/20 border-none px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-                data-testid="badge-hero-status"
-              >
-                <HeartHandshake className="w-4 h-4 mr-2 inline-block" />
-                Join 1,200+ neighbors trading time
-              </Badge>
               <h1
                 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.1] mb-6 text-foreground"
                 data-testid="text-hero-title"
@@ -71,7 +64,7 @@ export default function About() {
                 {!user && (
                   <>
                     <Link href="/login">
-                     <Button
+                      <Button
                         size="lg"
                         className="rounded-full text-base h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
                         data-testid="button-hero-primary"
@@ -92,23 +85,6 @@ export default function About() {
                     </Link>
                   </>
                 )}
-              </div>
-
-              <div className="mt-10 flex items-center gap-4 text-sm text-muted-foreground font-medium">
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-full border-2 border-background bg-secondary flex items-center justify-center overflow-hidden"
-                    >
-                      <img
-                        src={`https://i.pravatar.cc/100?img=${i + 10}`}
-                        alt="User avatar"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <p>Over 5,000 hours exchanged this month</p>
               </div>
             </div>
 
@@ -178,10 +154,11 @@ export default function About() {
 
             <Card className="bg-card border-none shadow-sm hover:shadow-md transition-shadow rounded-3xl relative overflow-hidden group">
               <CardContent className="p-8">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{color:"#ffca80", backgroundColor:"#fff4e6"}}>
-                  <span className="text-2xl font-display font-bold">
-                    2
-                  </span>
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"
+                  style={{ color: "#ffca80", backgroundColor: "#fff4e6" }}
+                >
+                  <span className="text-2xl font-display font-bold">2</span>
                 </div>
                 <h3 className="text-xl font-bold mb-3">Bank Your Hours</h3>
                 <p className="text-muted-foreground leading-relaxed">
@@ -366,10 +343,9 @@ export default function About() {
                   src={teachingImage}
                   alt="Tutoring"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />              
-                </div>
+                />
+              </div>
               <CardContent className="p-6 relative">
-                
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full border-2 border-background shadow-sm bg-muted flex items-center justify-center text-muted-foreground font-bold">
                     MK
