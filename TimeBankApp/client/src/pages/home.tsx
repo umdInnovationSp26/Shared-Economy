@@ -15,24 +15,24 @@ import { useLocation } from "wouter";
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
   const [credits, setCredits] = useState(0);
-  const [,setLocation] = useLocation();
+  const [, setLocation] = useLocation();
 
   const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
   const { tasks } = useTasks();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [enteredHours, setEnteredHours] = useState("");
 
-  const handleCancel = async(taskId:string) => {
+  const handleCancel = async (taskId: string) => {
     const user = auth.currentUser;
 
     if (!user) return;
 
     try {
       const userRef = doc(db, "users", user.uid);
-      const taskRef = doc(db,"tasks", taskId);
+      const taskRef = doc(db, "tasks", taskId);
 
       await updateDoc(userRef, {
-        currentTasks: arrayRemove(taskId),
+        CurrentTasks: arrayRemove(taskId),
       });
       console.log("task %s has been removed from current tasks", taskId);
 
@@ -40,12 +40,10 @@ export default function Home() {
         isAssigned: false,
       });
       console.log("task %s has been unassigned from user %s", user.displayName);
-
     } catch (e) {
       console.warn("Unable to remove or unassigned task %s: %s", taskId, e);
     }
-
-  }
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -128,7 +126,7 @@ export default function Home() {
               hrs
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {tasks.filter((task) => userTaskIds.includes(task.id)).length}
+              {tasks.filter((task) => userTaskIds.includes(task.id)).length}{" "}
               active request
             </p>
           </CardContent>
@@ -173,11 +171,12 @@ export default function Home() {
 
                   <CardFooter className="justify-end">
                     <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                      onClick={() => handleCancel(task.id)} 
-                      variant="outline" 
-                      className="border-primary text-center text-primary rounded-md hover:bg-primary/10">
-                          Cancel task
+                      <Button
+                        onClick={() => handleCancel(task.id)}
+                        variant="outline"
+                        className="border-primary text-center text-primary rounded-md hover:bg-primary/10"
+                      >
+                        Cancel task
                       </Button>
                       <Button
                         variant="default"
@@ -202,7 +201,10 @@ export default function Home() {
         <div className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Available Nearby</h2>
-            <button onClick={() => setLocation("/tasks")} className="text-sm text-primary hover:underline font-medium">
+            <button
+              onClick={() => setLocation("/tasks")}
+              className="text-sm text-primary hover:underline font-medium"
+            >
               View all
             </button>
           </div>
@@ -303,13 +305,18 @@ export default function Home() {
                     CurrentTasks: arrayRemove(selectedTaskId),
                     credits: increment(Number(enteredHours)),
                   });
-                  console.log("task %s successfully removed from Current tasks", selectedTaskId);
+                  console.log(
+                    "task %s successfully removed from Current tasks",
+                    selectedTaskId,
+                  );
 
                   await updateDoc(userRef, {
                     CompletedTasks: arrayUnion(selectedTaskId),
                   });
-                  console.log("task %s successfully added to Completed tasks", selectedTaskId);
-
+                  console.log(
+                    "task %s successfully added to Completed tasks",
+                    selectedTaskId,
+                  );
 
                   setCredits((prev) => prev + Number(enteredHours));
                   setUserTaskIds((prev) =>
