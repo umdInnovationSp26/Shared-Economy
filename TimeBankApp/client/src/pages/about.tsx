@@ -5,16 +5,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Clock,
-  ArrowRight,
-  HeartHandshake,
-  Leaf,
-  BookOpen,
-  PenTool,
-  ShieldCheck,
-  Star,
-} from "lucide-react";
+import { Clock, ArrowRight, HeartHandshake, Leaf, BookOpen, PenTool, ShieldCheck, Star, } from "lucide-react";
 import heroImage from "@/assets/images/tools.png"; //  Placeholder image for hero section
 import gardeningImage from "@/assets/images/gardening.png";
 import teachingImage from "@/assets/images/tutoring.png";
@@ -187,8 +178,8 @@ export default function About() {
 
             <Card className="bg-card border-none shadow-sm hover:shadow-md transition-shadow rounded-3xl relative overflow-hidden group">
               <CardContent className="p-8">
-                <div className="w-14 h-14 bg-accent/10 text-accent-foreground rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <span className="text-2xl font-display font-bold text-accent">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{color:"#ffca80", backgroundColor:"#fff4e6"}}>
+                  <span className="text-2xl font-display font-bold">
                     2
                   </span>
                 </div>

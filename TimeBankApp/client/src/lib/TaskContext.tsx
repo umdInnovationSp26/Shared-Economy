@@ -13,6 +13,9 @@ export type Task = {
   image: string;
   category: string;
   isAssigned: boolean;
+  isCompleted: boolean;
+  madeBy: string;
+  actualTime: number;
 };
 
 interface TaskContextType {
@@ -39,7 +42,10 @@ useEffect(() => {
         hours: data.hours || 0,
         image: data.image || toolsImg,
         category: data.category || "",
-        isAssigned: false
+        isAssigned: false,
+        isCompleted: false,
+        madeBy: data.madeBy || "",
+        actualTime: data.actualTime || data.hours,
       };
     });
 
