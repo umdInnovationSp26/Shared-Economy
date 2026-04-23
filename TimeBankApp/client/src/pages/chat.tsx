@@ -16,13 +16,34 @@ import NewChatModal from "@/components/ui/new-chat-modal";
 
 type Chat = {
   id: string;
-  name: string;
-  avatar: string;
   isGroup?: boolean;
+  name?: string; // only present on group chats
+  avatar?: string;
+  memberNames?: Record<string, string>;
+  memberInitials?: Record<string, string>;
+  participantIds?: string[];
   lastMessage?: string;
   lastMessageTime?: any;
   unread?: number;
 };
+
+function getChatDisplayName(chat: Chat, currentUserId: string): string {
+  if (chat.isGroup) return chat.name ?? "Group Chat";
+  if (!chat.memberNames || !chat.participantIds) return "Unknown";
+  const otherId = chat.participantIds.find((id) => id !== currentUserId);
+  return otherId ? (chat.memberNames[otherId] ?? "Unknown") : "Unknown";
+}
+
+function getChatAvatar(chat: Chat, currentUserId: string): string {
+  if (chat.isGroup) return (chat.name ?? "G").slice(0, 2).toUpperCase();
+  if (!chat.memberInitials || !chat.participantIds) return "?";
+  const otherId = chat.participantIds.find((id) => id !== currentUserId);
+  return otherId ? (chat.memberInitials[otherId] ?? "?") : "?";
+}
+
+function getSenderAvatar(chat: Chat, senderId: string): string {
+  return chat.memberInitials?.[senderId] ?? "?";
+}
 
 type Message = {
   id: string;
@@ -206,39 +227,43 @@ export default function Chat() {
               </div>
             ) : (
               <div className="p-2 space-y-1">
-                {chats.map((chat) => (
-                  <button
-                    key={chat.id}
-                    onClick={() => setActiveChat(chat)}
-                    className={`w-full text-left p-3 rounded-xl flex gap-3 items-center transition-colors ${
-                      activeChat?.id === chat.id ? "bg-primary/10" : "hover:bg-muted"
-                    }`}
-                  >
-                    <div className="relative">
-                      <Avatar className="h-10 w-10 border border-background">
-                        <AvatarFallback className={chat.isGroup ? "bg-blue-100 text-blue-700" : "bg-primary/20 text-primary"}>
-                          {chat.avatar}
-                        </AvatarFallback>
-                      </Avatar>
-                      {(chat.unread ?? 0) > 0 && (
-                        <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive rounded-full border-2 border-background text-[10px] flex items-center justify-center text-white font-bold">
-                          {chat.unread}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex justify-between items-baseline mb-0.5">
-                        <p className={`font-semibold text-sm truncate ${activeChat?.id === chat.id ? "text-primary" : ""}`}>
-                          {chat.name}
-                        </p>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                          {formatTime(chat.lastMessageTime)}
-                        </span>
+                {chats.map((chat) => {
+                  const displayName = getChatDisplayName(chat, currentUserId ?? "");
+                  const avatar = getChatAvatar(chat, currentUserId ?? "");
+                  return (
+                    <button
+                      key={chat.id}
+                      onClick={() => setActiveChat(chat)}
+                      className={`w-full text-left p-3 rounded-xl flex gap-3 items-center transition-colors ${
+                        activeChat?.id === chat.id ? "bg-primary/10" : "hover:bg-muted"
+                      }`}
+                    >
+                      <div className="relative">
+                        <Avatar className="h-10 w-10 border border-background">
+                          <AvatarFallback className={chat.isGroup ? "bg-blue-100 text-blue-700" : "bg-primary/20 text-primary"}>
+                            {avatar}                          {/* ← was chat.avatar */}
+                          </AvatarFallback>
+                        </Avatar>
+                        {(chat.unread ?? 0) > 0 && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive rounded-full border-2 border-background text-[10px] flex items-center justify-center text-white font-bold">
+                            {chat.unread}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs truncate text-muted-foreground">{chat.lastMessage ?? ""}</p>
-                    </div>
-                  </button>
-                ))}
+                      <div className="flex-1 overflow-hidden">
+                        <div className="flex justify-between items-baseline mb-0.5">
+                          <p className={`font-semibold text-sm truncate ${activeChat?.id === chat.id ? "text-primary" : ""}`}>
+                            {displayName}                     {/* ← was chat.name */}
+                          </p>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                            {formatTime(chat.lastMessageTime)}
+                          </span>
+                        </div>
+                        <p className="text-xs truncate text-muted-foreground">{chat.lastMessage ?? ""}</p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
@@ -265,11 +290,11 @@ export default function Chat() {
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
                     <AvatarFallback className={activeChat.isGroup ? "bg-blue-100 text-blue-700" : "bg-primary/20 text-primary"}>
-                      {activeChat.avatar}
+                      {getChatAvatar(activeChat, currentUserId ?? "")}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold text-sm">{activeChat.name}</h3>
+                    <h3 className="font-semibold text-sm">{getChatDisplayName(activeChat, currentUserId ?? "")}</h3>
                     <p className="text-xs text-muted-foreground flex items-center">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
                       {activeChat.isGroup ? "Group chat" : "Online"}
@@ -301,12 +326,13 @@ export default function Chat() {
                   ) : (
                     messages.map((msg) => {
                       const isMe = msg.senderId === currentUserId;
+                      const senderAvatar = getSenderAvatar(activeChat, msg.senderId)
                       return (
                         <div key={msg.id} className={`flex gap-3 max-w-[80%] ${isMe ? "ml-auto justify-end" : ""}`}>
                           {!isMe && (
                             <Avatar className="h-8 w-8 mt-auto shrink-0">
                               <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                                {activeChat.avatar}
+                                {senderAvatar}
                               </AvatarFallback>
                             </Avatar>
                           )}
