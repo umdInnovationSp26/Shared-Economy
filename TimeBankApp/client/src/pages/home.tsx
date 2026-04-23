@@ -5,7 +5,7 @@ import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
 import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, arrayRemove, increment, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayRemove, increment, arrayUnion, onSnapshot } from "firebase/firestore";
 import { useTasks } from "@/lib/TaskContext";
 import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -48,44 +48,21 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      const user = auth.currentUser;
+    const user = auth.currentUser;
+    if (!user) return;
 
-      if (!user) return;
+    const userRef = doc(db, "users", user.uid);
 
-      try {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          console.log("Fetched user document:", data);
-          setDisplayName(data.displayName || "User");
-
-          setCredits(data.credits || 0);
-
-          if (Array.isArray(data.CurrentTasks)) {
-            console.log("CurrentTasks field:", data.CurrentTasks);
-            setUserTaskIds(data.CurrentTasks);
-          } else {
-            console.warn(
-              "CurrentTasks field missing or not an array",
-              data.CurrentTasks,
-            );
-            setUserTaskIds([]);
-          }
-        } else {
-          setDisplayName("User");
-          setUserTaskIds([]);
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        setDisplayName("User");
-        setUserTaskIds([]);
+    const unsubscribe = onSnapshot(userRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setDisplayName(data.displayName || "User");
+        setCredits(data.credits || 0);
+        setUserTaskIds(Array.isArray(data.CurrentTasks) ? data.CurrentTasks : []);
       }
-    };
+    });
 
-    fetchUserProfile();
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -308,10 +285,7 @@ export default function Home() {
                   console.log("task %s successfully added to Completed tasks", selectedTaskId);
 
 
-                  setCredits((prev) => prev + Number(enteredHours));
-                  setUserTaskIds((prev) =>
-                    prev.filter((id) => id !== selectedTaskId),
-                  );
+                  // No manual state updates needed — onSnapshot handles it
                   setSelectedTaskId(null);
                   setEnteredHours("");
                 }}

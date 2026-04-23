@@ -11,7 +11,7 @@ import { Dialog, DialogTrigger, DialogTitle, DialogContent, DialogClose, DialogO
 import "./tasks.css";
 
 import { auth, db } from "@/lib/firebase";
-import { arrayUnion, collection, doc, getDocs, query, updateDoc, where, } from "firebase/firestore";
+import { arrayUnion, collection, doc, onSnapshot, query, updateDoc, where, } from "firebase/firestore";
 
 const handleAssignment = async (taskId: string) => {
   const user = auth.currentUser;
@@ -42,12 +42,11 @@ export default function Tasks() {
   const [, setLocation] = useLocation()
 
   useEffect(() => {
-    async function fetchUnassignedTasks() {
-      const tasksRef = collection(db, "tasks");
-      const unassignedQuery = query(tasksRef, where("isAssigned", "==", false));
-      const querySnapshot = await getDocs(unassignedQuery);
+    const tasksRef = collection(db, "tasks");
+    const unassignedQuery = query(tasksRef, where("isAssigned", "==", false));
 
-      return querySnapshot.docs.map((doc) => {
+    const unsubscribe = onSnapshot(unassignedQuery, (snapshot) => {
+      const tasks = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -64,10 +63,10 @@ export default function Tasks() {
           actualTime: data.actualTime,
         };
       });
-    }
-    fetchUnassignedTasks().then((tasks) => {
       setUnassignedTasks(tasks);
     });
+
+    return () => unsubscribe(); // cleanup on unmount
   }, []);
 
   return (
