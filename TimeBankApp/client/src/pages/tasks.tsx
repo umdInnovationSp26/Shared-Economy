@@ -26,10 +26,7 @@ const handleAssignment = async (taskId: string) => {
     console.log("task %s added to user", taskId);
     
     await updateDoc(taskRef, {
-      isAssigned: true,
-      assignedTo: user.uid,
-      assignedAt: new Date(),
-      status: "assigned"
+      isAssigned: true
     });
 
     console.log("task %s set to true", taskId);
