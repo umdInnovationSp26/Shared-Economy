@@ -27,7 +27,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
 import { DialogPortal } from "@radix-ui/react-dialog";
-import { useLocation } from "wouter";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
