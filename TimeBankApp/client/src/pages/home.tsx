@@ -7,6 +7,7 @@ import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, arrayRemove, increment, arrayUnion } from "firebase/firestore";
 import { useTasks } from "@/lib/TaskContext";
+import { completeTask } from "@/lib/transactions";
 import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DialogPortal } from "@radix-ui/react-dialog";
@@ -170,23 +171,45 @@ export default function Home() {
                       </div>
                     </div>
                   </CardContent>
+<CardFooter className="justify-end">
+  <div className="grid grid-cols-2 gap-3">
+    <Button
+      onClick={() => handleCancel(task.id)}
+      variant="outline"
+      className="border-primary text-center text-primary rounded-md hover:bg-primary/10"
+    >
+      Cancel task
+    </Button>
 
-                  <CardFooter className="justify-end">
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button onClick={() => handleCancel(task.id)} variant="outline" className="border-primary text-center text-primary rounded-md hover:bg-primary/10">
-                          Cancel task
-                      </Button>
-                      <Button
-                        variant="default"
-                        className="border-primary rounded-md hover:bg-primary/10"
-                        onClick={() => setSelectedTaskId(task.id)}
-                      >
-                        Mark Complete
-                        {selectedTaskId === task.id ? "(selected)" : ""}
-                      </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
+    <Button
+      variant="default"
+      className="border-primary rounded-md hover:bg-primary/10"
+      onClick={async () => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        try {
+          setSelectedTaskId(task.id);
+
+          await completeTask(user.uid, task);
+
+          const userRef = doc(db, "users", user.uid);
+          await updateDoc(userRef, {
+            CurrentTasks: arrayRemove(task.id),
+          });
+
+          alert("Task completed!");
+        } catch (err) {
+          console.error(err);
+          alert("Failed to complete task");
+        }
+      }}
+    >
+      Mark Complete {selectedTaskId === task.id ? "(selected)" : ""}
+    </Button>
+  </div>
+</CardFooter>
+</Card>
               ))
           ) : (
             <div className="text-muted-foreground text-center py-4">

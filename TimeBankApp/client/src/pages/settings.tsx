@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, updateProfile, User as FirebaseUser } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card";
@@ -20,6 +28,18 @@ type SettingsTab =
   | "trust"
   | "ledger";
 
+type LedgerTransaction = {
+  id: string;
+  taskId?: string;
+  title?: string;
+  amount?: number;
+  type?: "earned" | "spent";
+  category?: string;
+  description?: string;
+  status?: string;
+  timestamp?: any;
+};
+
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
@@ -36,16 +56,21 @@ export default function Settings() {
   const [proximityAlerts, setProximityAlerts] = useState(true);
   const [showExactLocation, setShowExactLocation] = useState(false);
 
+  const [transactions, setTransactions] = useState<LedgerTransaction[]>([]);
+
   const [saveMessage, setSaveMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribeTransactions: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setSaveMessage("");
       setErrorMessage("");
 
       if (!user) {
+        setTransactions([]);
         setLoading(false);
         return;
       }
@@ -73,6 +98,17 @@ export default function Settings() {
           setProximityAlerts(true);
           setShowExactLocation(false);
         }
+
+        const txRef = collection(db, "users", user.uid, "transactions");
+        const txQuery = query(txRef, orderBy("timestamp", "desc"));
+
+        unsubscribeTransactions = onSnapshot(txQuery, (snapshot) => {
+          const txs = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as LedgerTransaction[];
+          setTransactions(txs);
+        });
       } catch (error) {
         console.error("Failed to load settings:", error);
         setErrorMessage("Failed to load settings.");
@@ -81,7 +117,10 @@ export default function Settings() {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeTransactions) unsubscribeTransactions();
+    };
   }, []);
 
   const handleSave = async () => {
@@ -222,15 +261,7 @@ export default function Settings() {
                   <Avatar className="h-20 w-20 border-2 border-primary/20">
                     <AvatarImage src={avatarUrl} />
                     <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                      {displayName
-                        ? displayName
-                            .trim()
-                            .split("")
-                            .map((part) => part[0])
-                            .join("")
-                            .slice(0, 2)
-                            .toUpperCase()
-                          : "U"}
+                      {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -369,13 +400,40 @@ export default function Settings() {
                   Track your earned and spent hours over time.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="rounded-lg border p-4">
-                  <p className="font-medium">Hours Summary</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Ledger history and transaction details can be displayed here.
-                  </p>
-                </div>
+              <CardContent className="space-y-4">
+                {transactions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No transactions yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {transactions.map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="rounded-lg border p-4 flex items-start justify-between"
+                      >
+                        <div>
+                          <p className="font-medium">{tx.title || "Untitled task"}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {tx.description || "No description"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {tx.category || "General"} •{" "}
+                            {tx.timestamp?.toDate
+                              ? tx.timestamp.toDate().toLocaleString()
+                              : "Pending"}
+                          </p>
+                        </div>
+                        <div
+                          className={`font-semibold ${
+                            tx.type === "earned" ? "text-green-600" : "text-red-500"
+                          }`}
+                        >
+                          {tx.type === "earned" ? "+" : "-"}
+                          {tx.amount || 0} hrs
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
