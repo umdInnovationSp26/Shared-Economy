@@ -7,10 +7,6 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import { Clock, MapPin } from "lucide-react";
-import gardeningImg from "@/assets/images/gardening.png";
-import toolsImg from "@/assets/images/tools.png";
-import { auth, db } from "@/lib/firebase";
 import {
   doc,
   getDoc,
@@ -24,6 +20,22 @@ import { completeTask } from "@/lib/transactions";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
+import gardeningImg from "@/assets/images/gardening.png";
+import toolsImg from "@/assets/images/tools.png";
+import { auth, db } from "@/lib/firebase";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogTitle,
+  DialogContent,
+  DialogClose,
+  DialogOverlay,
+  DialogPortal,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
@@ -33,7 +45,6 @@ export default function Home() {
 
   const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
   const { tasks } = useTasks();
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [enteredHours, setEnteredHours] = useState("");
 
   const handleCancel = async (taskId: string) => {
@@ -72,6 +83,8 @@ export default function Home() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       const user = auth.currentUser;
+
+      
       if (!user) return;
 
       try {
@@ -86,8 +99,10 @@ export default function Home() {
           if (Array.isArray(data.CurrentTasks)) {
             setUserTaskIds(data.CurrentTasks);
           } else {
+            console.warn("CurrentTasks field missing or not an array", data.CurrentTasks);
             setUserTaskIds([]);
           }
+
         } else {
           setDisplayName("User");
           setUserTaskIds([]);
@@ -182,7 +197,8 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-12 px-6">
+      {/* Stats row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-primary text-primary-foreground border-none shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-80">
@@ -210,6 +226,40 @@ export default function Home() {
             </p>
           </CardContent>
         </Card>
+        
+        
+        
+<!--         /* OLD CARDS FOR "given" AND "received" FOR HELP PLEASE KEEP FOR LATER!!! */ -->
+<!-- /*   
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <ArrowUpRight className="h-4 w-4 text-emerald-500" /> Given (This
+              Week)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold font-display">4 hrs</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              +2 hrs from last week
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <ArrowDownRight className="h-4 w-4 text-blue-500" /> Received
+              (This Week)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold font-display">1.5 hrs</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Lawn mowing service
+            </p>
+          </CardContent>
+        </Card> */  -->
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -217,60 +267,89 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Current Tasks</h2>
           </div>
+          
+  <Dialog>
+    <DialogTrigger asChild>
+      <Button
+  size="sm"
+  variant="outline"
+  className="flex-1 border-primary text-primary hover:bg-primary/10"
+>
+        Cancel Task
+      </Button>
+    </DialogTrigger>
 
-          {currentTasks.length > 0 ? (
-            currentTasks.map((task) => (
-              <Card
-                key={task.id}
-                className="border border-primary/20 bg-primary/5 shadow-none"
+    <DialogPortal>
+      <DialogOverlay className="backdrop-blur-sm">
+        <DialogContent>
+          <DialogTitle>Cancel this task?</DialogTitle>
+          <DialogDescription>
+            This will remove the task from your current tasks.
+          </DialogDescription>
+
+          <div className="flex justify-end mt-4">
+            <DialogClose asChild>
+              <Button
+                className="bg-primary text-white"
+                onClick={() => handleCancel(task.id)}
               >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{task.title}</CardTitle>
-                  <CardDescription>
-                    {task.madeBy.length > 0
-                      ? "An exchange with " + task.madeBy
-                      : "No name found"}
-                  </CardDescription>
-                </CardHeader>
+                Yes, Cancel Task
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogContent>
+      </DialogOverlay>
+    </DialogPortal>
+  </Dialog>
 
-                <CardContent>
-                  <div className="flex justify-between items-end">
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                        In Progress
-                      </span>
-                      <div className="text-sm text-muted-foreground flex items-center mt-2">
-                        <Clock className="mr-1 h-3 w-3" /> {task.hours} hrs
-                        locked
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
+  <Dialog>
+    <DialogTrigger asChild>
+     <Button
+  size="sm"
+  className="flex-1 bg-primary text-white"
+>
+        Mark Complete
+      </Button>
+    </DialogTrigger>
 
-                <CardFooter className="justify-end">
-                  <div className="grid grid-cols-2 gap-3 w-full">
-                    <Button
-                      onClick={() => handleCancel(task.id)}
-                      variant="outline"
-                      className="border-primary text-center text-primary rounded-md hover:bg-primary/10 text-xs px-2 whitespace-nowrap"
-                    >
-                      Cancel task
-                    </Button>
+    <DialogPortal>
+      <DialogOverlay className="backdrop-blur-sm">
+        <DialogContent>
+          <DialogTitle>Log Hours</DialogTitle>
+          <DialogDescription>
+            Enter how many hours this task took.
+          </DialogDescription>
 
-                    <Button
-                      variant="default"
-                      className="border-primary rounded-md text-xs px-2 whitespace-nowrap"
-                      onClick={() => {
+          <input
+            type="number"
+            placeholder="Enter hours"
+            className="w-full border rounded-md p-2 mt-4 mb-4"
+            value={enteredHours}
+            onChange={(e) => setEnteredHours(e.target.value)}
+          />
+
+          <div className="flex justify-end">
+            <DialogClose asChild>
+              <Button
+                className="bg-primary text-white"
+                onClick={() => {
                         setSelectedTaskId(task.id);
                         setEnteredHours(task.hours.toString());
                       }}
-                    >
-                      Mark Complete
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))
+              >
+                Submit
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogContent>
+      </DialogOverlay>
+    </DialogPortal>
+  </Dialog>
+</CardFooter>
+                   </Card>
+               
+              ))
+
           ) : (
             <div className="text-muted-foreground text-center py-4">
               No tasks found.
@@ -355,42 +434,9 @@ export default function Home() {
             </Card>
           </div>
         </div>
-      </div>
-
-      {selectedTaskId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-            <h2 className="text-lg font-bold mb-4">Log Hours</h2>
-
-            <input
-              type="number"
-              placeholder="Enter hours"
-              className="w-full border rounded-md p-2 mb-4"
-              value={enteredHours}
-              onChange={(e) => setEnteredHours(e.target.value)}
-            />
-
-            <div className="flex gap-2">
-              <button
-                className="w-full bg-primary text-white py-2 rounded-md"
-                onClick={handleSubmitLoggedHours}
-              >
-                Submit
-              </button>
-
-              <button
-                className="w-full border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-100"
-                onClick={() => {
-                  setSelectedTaskId(null);
-                  setEnteredHours("");
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
         </div>
-      )}
+
+      
     </div>
   );
 }
