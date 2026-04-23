@@ -24,6 +24,10 @@ import { completeTask } from "@/lib/transactions";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
+import { DialogPortal } from "@radix-ui/react-dialog";
+import { useLocation } from "wouter";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
@@ -31,10 +35,12 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
+
   const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
   const { tasks } = useTasks();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [enteredHours, setEnteredHours] = useState("");
+
 
   const handleCancel = async (taskId: string) => {
     const user = auth.currentUser;
@@ -42,17 +48,19 @@ export default function Home() {
 
     try {
       const userRef = doc(db, "users", user.uid);
-      const taskRef = doc(db, "tasks", taskId);
+      const taskRef = doc(db,"tasks", taskId);
 
       await updateDoc(userRef, {
-        CurrentTasks: arrayRemove(taskId),
+        currentTasks: arrayRemove(taskId),
       });
+      console.log("task %s has been removed from current tasks", taskId);
 
       await updateDoc(taskRef, {
         isAssigned: false,
       });
 
       setUserTaskIds((prev) => prev.filter((id) => id !== taskId));
+      console.log("task %s has been unassigned from user %s", user.displayName);
 
       toast({
         title: "Task cancelled",
@@ -69,9 +77,11 @@ export default function Home() {
     }
   };
 
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       const user = auth.currentUser;
+
       if (!user) return;
 
       try {
@@ -86,6 +96,10 @@ export default function Home() {
           if (Array.isArray(data.CurrentTasks)) {
             setUserTaskIds(data.CurrentTasks);
           } else {
+            console.warn(
+              "CurrentTasks field missing or not an array",
+              data.CurrentTasks,
+            );
             setUserTaskIds([]);
           }
         } else {
@@ -182,6 +196,8 @@ export default function Home() {
         </p>
       </div>
 
+
+      {/* Stats row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-12 px-6">
         <Card className="bg-primary text-primary-foreground border-none shadow-md">
           <CardHeader className="pb-2">
@@ -207,6 +223,7 @@ export default function Home() {
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {currentTasks.length} active request
+
             </p>
           </CardContent>
         </Card>
@@ -285,6 +302,7 @@ export default function Home() {
               onClick={() => setLocation("/tasks")}
               className="text-sm text-primary hover:underline font-medium"
             >
+
               View all
             </button>
           </div>
@@ -356,7 +374,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
       {selectedTaskId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-lg shadow-lg w-80">
@@ -374,6 +391,7 @@ export default function Home() {
               <button
                 className="w-full bg-primary text-white py-2 rounded-md"
                 onClick={handleSubmitLoggedHours}
+
               >
                 Submit
               </button>
