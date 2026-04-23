@@ -165,7 +165,7 @@ export default function Tasks() {
                           <Button
                             size="sm"
                             className="rounded-full take-task-btn"
-                            onClick={() => handleAssignment(task.id).then(() => setLocation("/home"))}
+                            onClick={() => handleAssignment(task.id)}
                           >
                             Take on this task
                           </Button>
