@@ -7,7 +7,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
-import { Clock, MapPin } from "lucide-react";
+import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
 import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
@@ -19,14 +19,22 @@ import {
   increment,
   arrayUnion,
 } from "firebase/firestore";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogTitle,
+  DialogContent,
+  DialogClose,
+  DialogOverlay,
+  DialogPortal,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useTasks } from "@/lib/TaskContext";
 import { completeTask } from "@/lib/transactions";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
-import { DialogPortal } from "@radix-ui/react-dialog";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
@@ -50,7 +58,7 @@ export default function Home() {
       const taskRef = doc(db,"tasks", taskId);
 
       await updateDoc(userRef, {
-        currentTasks: arrayRemove(taskId),
+        CurrentTasks: arrayRemove(taskId),
       });
       console.log("task %s has been removed from current tasks", taskId);
 
@@ -89,6 +97,7 @@ export default function Home() {
 
         if (userSnap.exists()) {
           const data = userSnap.data();
+          console.log("Fetched user document:", data);
           setDisplayName(data.displayName || "User");
           setCredits(data.credits || 0);
 
@@ -186,6 +195,7 @@ export default function Home() {
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header section */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight mb-2">
           Welcome back, {displayName || "User"}! 👋
@@ -229,6 +239,7 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Underway Tasks */}
         <div className="space-y-4 lg:col-span-1">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Current Tasks</h2>
@@ -256,34 +267,87 @@ export default function Home() {
                         In Progress
                       </span>
                       <div className="text-sm text-muted-foreground flex items-center mt-2">
-                        <Clock className="mr-1 h-3 w-3" /> {task.hours} hrs
-                        locked
+                        <Clock className="mr-1 h-3 w-3" /> {task.hours} hrs locked
                       </div>
                     </div>
                   </div>
                 </CardContent>
 
-                <CardFooter className="justify-end">
-                  <div className="grid grid-cols-2 gap-3 w-full">
-                    <Button
-                      onClick={() => handleCancel(task.id)}
-                      variant="outline"
-                      className="border-primary text-center text-primary rounded-md hover:bg-primary/10 text-xs px-2 whitespace-nowrap"
-                    >
-                      Cancel task
-                    </Button>
+                <CardFooter className="flex gap-2">
+  <Dialog>
+    <DialogTrigger asChild>
+      <Button
+        size="sm"
+        variant="outline"
+        className="flex-1 border-primary text-primary hover:bg-primary/10"
+      >
+        Cancel Task
+      </Button>
+    </DialogTrigger>
 
-                    <Button
-                      variant="default"
-                      className="border-primary rounded-md text-xs px-2 whitespace-nowrap"
-                      onClick={() => {
-                        setSelectedTaskId(task.id);
-                        setEnteredHours(task.hours.toString());
-                      }}
-                    >
-                      Mark Complete
-                    </Button>
-                  </div>
+    <DialogPortal>
+      <DialogOverlay className="backdrop-blur-sm">
+        <DialogContent>
+          <DialogTitle>Cancel this task?</DialogTitle>
+          <DialogDescription>
+            This will remove the task from your current tasks.
+          </DialogDescription>
+
+          <div className="flex justify-end mt-4">
+            <DialogClose asChild>
+              <Button
+                className="bg-primary text-white"
+                onClick={() => handleCancel(task.id)}
+              >
+                Yes, Cancel Task
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogContent>
+      </DialogOverlay>
+    </DialogPortal>
+  </Dialog>
+
+  <Dialog>
+    <DialogTrigger asChild>
+     <Button
+        size="sm"
+        className="flex-1 bg-primary text-white"
+      >
+        Mark Complete
+      </Button>
+    </DialogTrigger>
+
+    <DialogPortal>
+      <DialogOverlay className="backdrop-blur-sm">
+        <DialogContent>
+          <DialogTitle>Log Hours</DialogTitle>
+          <DialogDescription>
+            Enter how many hours this task took.
+          </DialogDescription>
+
+          <input
+            type="number"
+            placeholder="Enter hours"
+            className="w-full border rounded-md p-2 mt-4 mb-4"
+            value={enteredHours}
+            onChange={(e) => setEnteredHours(e.target.value)}
+          />
+
+          <div className="flex justify-end">
+            <DialogClose asChild>
+              <Button
+                className="bg-primary text-white"
+                onClick={handleSubmitLoggedHours}
+              >
+                Submit
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogContent>
+      </DialogOverlay>
+    </DialogPortal>
+  </Dialog>
                 </CardFooter>
               </Card>
             ))
@@ -294,6 +358,7 @@ export default function Home() {
           )}
         </div>
 
+        {/* Nearby Available Tasks */}
         <div className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Available Nearby</h2>
@@ -307,6 +372,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Placeholder Task 1 */}
             <Card className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
               <div className="h-32 w-full overflow-hidden">
                 <img
@@ -339,6 +405,7 @@ export default function Home() {
               </CardContent>
             </Card>
 
+            {/* Placeholder Task 2 */}
             <Card className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
               <div className="h-32 w-full overflow-hidden">
                 <img
@@ -373,41 +440,8 @@ export default function Home() {
           </div>
         </div>
       </div>
-      {selectedTaskId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-            <h2 className="text-lg font-bold mb-4">Log Hours</h2>
 
-            <input
-              type="number"
-              placeholder="Enter hours"
-              className="w-full border rounded-md p-2 mb-4"
-              value={enteredHours}
-              onChange={(e) => setEnteredHours(e.target.value)}
-            />
-
-            <div className="flex gap-2">
-              <button
-                className="w-full bg-primary text-white py-2 rounded-md"
-                onClick={handleSubmitLoggedHours}
-
-              >
-                Submit
-              </button>
-
-              <button
-                className="w-full border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-100"
-                onClick={() => {
-                  setSelectedTaskId(null);
-                  setEnteredHours("");
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }
