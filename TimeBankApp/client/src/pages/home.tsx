@@ -313,6 +313,7 @@ export default function Home() {
      <Button
         size="sm"
         className="flex-1 bg-primary text-white"
+        onClick = {() => setSelectedTaskId(task.id)}
       >
         Mark Complete
       </Button>
