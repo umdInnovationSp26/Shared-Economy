@@ -205,7 +205,6 @@ export default function Home() {
         </p>
       </div>
 
-
       {/* Stats row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-12 px-6">
         <Card className="bg-primary text-primary-foreground border-none shadow-md">
@@ -244,7 +243,6 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Current Tasks</h2>
           </div>
-
           {currentTasks.length > 0 ? (
             currentTasks.map((task) => (
               <Card
@@ -259,7 +257,6 @@ export default function Home() {
                       : "No name found"}
                   </CardDescription>
                 </CardHeader>
-
                 <CardContent>
                   <div className="flex justify-between items-end">
                     <div className="space-y-1">
@@ -273,13 +270,12 @@ export default function Home() {
                   </div>
                 </CardContent>
 
-                <CardFooter className="flex gap-2">
+                <CardFooter className="flex gap-3">
   <Dialog>
     <DialogTrigger asChild>
       <Button
-        size="sm"
         variant="outline"
-        className="flex-1 border-primary text-primary hover:bg-primary/10"
+        className="flex-1 border-primary text-primary rounded-md hover:bg-primary/10"
       >
         Cancel Task
       </Button>
@@ -311,8 +307,7 @@ export default function Home() {
   <Dialog>
     <DialogTrigger asChild>
      <Button
-        size="sm"
-        className="flex-1 bg-primary text-white"
+        className="flex-1 border-primary rounded-md hover:bg-primary/10"
         onClick = {() => setSelectedTaskId(task.id)}
       >
         Mark Complete
