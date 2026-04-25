@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardFooter, } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
