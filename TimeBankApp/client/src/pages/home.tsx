@@ -1,30 +1,56 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
 import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, arrayRemove, increment, arrayUnion } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  arrayRemove,
+  increment,
+  arrayUnion,
+} from "firebase/firestore";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogTitle,
+  DialogContent,
+  DialogClose,
+  DialogOverlay,
+  DialogPortal,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useTasks } from "@/lib/TaskContext";
-import { Dialog, DialogContent, DialogClose, DialogDescription, DialogOverlay, DialogTrigger } from "@/components/ui/dialog";
+import { completeTask } from "@/lib/transactions";
 import { Button } from "@/components/ui/button";
-import { DialogPortal } from "@radix-ui/react-dialog";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");
   const [credits, setCredits] = useState(0);
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
 
   const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
   const { tasks } = useTasks();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [enteredHours, setEnteredHours] = useState("");
 
+
   const handleCancel = async (taskId: string) => {
     const user = auth.currentUser;
-
     if (!user) return;
 
     try {
@@ -39,11 +65,25 @@ export default function Home() {
       await updateDoc(taskRef, {
         isAssigned: false,
       });
+
+      setUserTaskIds((prev) => prev.filter((id) => id !== taskId));
       console.log("task %s has been unassigned from user %s", user.displayName);
+
+      toast({
+        title: "Task cancelled",
+        description: "The task was removed from your current tasks.",
+      });
     } catch (e) {
-      console.warn("Unable to remove or unassigned task %s: %s", taskId, e);
+      console.warn("Unable to remove or unassign task:", e);
+
+      toast({
+        title: "Failed to cancel task",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     }
   };
+
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -59,11 +99,9 @@ export default function Home() {
           const data = userSnap.data();
           console.log("Fetched user document:", data);
           setDisplayName(data.displayName || "User");
-
           setCredits(data.credits || 0);
 
           if (Array.isArray(data.CurrentTasks)) {
-            console.log("CurrentTasks field:", data.CurrentTasks);
             setUserTaskIds(data.CurrentTasks);
           } else {
             console.warn(
@@ -85,6 +123,75 @@ export default function Home() {
 
     fetchUserProfile();
   }, []);
+
+  const currentTasks = tasks.filter((task) => userTaskIds.includes(task.id));
+
+  const handleSubmitLoggedHours = async () => {
+    const user = auth.currentUser;
+
+    if (!user || !selectedTaskId) {
+      toast({
+        title: "No task selected",
+        description: "Please choose a task to complete.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!enteredHours || Number(enteredHours) <= 0) {
+      toast({
+        title: "Invalid hours",
+        description: "Please enter a valid number of hours.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedTask = tasks.find((task) => task.id === selectedTaskId);
+
+    if (!selectedTask) {
+      toast({
+        title: "Task not found",
+        description: "Unable to find the selected task.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+
+      // Updates the Hours/Credits for the user in transactions.ts
+      await completeTask(user.uid, {
+        ...selectedTask,
+        hours: Number(enteredHours),
+      });
+
+      await updateDoc(userRef, {
+        CurrentTasks: arrayRemove(selectedTaskId),
+        CompletedTasks: arrayUnion(selectedTaskId),
+      });
+
+      setCredits((prev) => prev + Number(enteredHours));
+      setUserTaskIds((prev) => prev.filter((id) => id !== selectedTaskId));
+      setSelectedTaskId(null);
+      setEnteredHours("");
+
+      toast({
+        title: "Task completed!",
+        description:
+          "Your logged hours were submitted, your ledger was updated, and your balance was increased.",
+      });
+    } catch (err) {
+      console.error(err);
+
+      toast({
+        title: "Failed to submit hours",
+        description: "Something went wrong while completing the task.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -120,14 +227,11 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold font-display">
-              {tasks
-                .filter((task) => userTaskIds.includes(task.id))
-                .reduce((total, task) => total + task.hours, 0)}
-              hrs
+              {currentTasks.reduce((total, task) => total + task.hours, 0)} hrs
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {tasks.filter((task) => userTaskIds.includes(task.id)).length}{" "}
-              active request
+              {currentTasks.length} active request
+
             </p>
           </CardContent>
         </Card>
@@ -139,57 +243,110 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Current Tasks</h2>
           </div>
-          {tasks && userTaskIds.length > 0 ? (
-            tasks
-              .filter((task) => userTaskIds.includes(task.id))
-              .map((task) => (
-                <Card
-                  key={task.id}
-                  className="border border-primary/20 bg-primary/5 shadow-none"
-                >
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{task.title}</CardTitle>
-                    <CardDescription>
-                      {task.madeBy.length > 0
-                        ? "An exchange with " + task.madeBy
-                        : "No name found"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-end">
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                          In Progress
-                        </span>
-                        <div className="text-sm text-muted-foreground flex items-center mt-2">
-                          <Clock className="mr-1 h-3 w-3" /> {task.hours} hrs
-                          locked
-                        </div>
+          {currentTasks.length > 0 ? (
+            currentTasks.map((task) => (
+              <Card
+                key={task.id}
+                className="border border-primary/20 bg-primary/5 shadow-none"
+              >
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{task.title}</CardTitle>
+                  <CardDescription>
+                    {task.madeBy.length > 0
+                      ? "An exchange with " + task.madeBy
+                      : "No name found"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-end">
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                        In Progress
+                      </span>
+                      <div className="text-sm text-muted-foreground flex items-center mt-2">
+                        <Clock className="mr-1 h-3 w-3" /> {task.hours} hrs locked
                       </div>
                     </div>
-                  </CardContent>
+                  </div>
+                </CardContent>
 
-                  <CardFooter className="justify-end">
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        onClick={() => handleCancel(task.id)}
-                        variant="outline"
-                        className="border-primary text-center text-primary rounded-md hover:bg-primary/10"
-                      >
-                        Cancel task
-                      </Button>
-                      <Button
-                        variant="default"
-                        className="border-primary rounded-md hover:bg-primary/10"
-                        onClick={() => setSelectedTaskId(task.id)}
-                      >
-                        Mark Complete
-                        {selectedTaskId === task.id ? "(selected)" : ""}
-                      </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))
+                <CardFooter className="flex gap-3">
+  <Dialog>
+    <DialogTrigger asChild>
+      <Button
+        variant="outline"
+        className="flex-1 border-primary text-primary rounded-md hover:bg-primary/10"
+      >
+        Cancel Task
+      </Button>
+    </DialogTrigger>
+
+    <DialogPortal>
+      <DialogOverlay className="backdrop-blur-sm">
+        <DialogContent>
+          <DialogTitle>Cancel this task?</DialogTitle>
+          <DialogDescription>
+            This will remove the task from your current tasks.
+          </DialogDescription>
+
+          <div className="flex justify-end mt-4">
+            <DialogClose asChild>
+              <Button
+                className="bg-primary text-white"
+                onClick={() => handleCancel(task.id)}
+              >
+                Yes, Cancel Task
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogContent>
+      </DialogOverlay>
+    </DialogPortal>
+  </Dialog>
+
+  <Dialog>
+    <DialogTrigger asChild>
+     <Button
+        className="flex-1 border-primary rounded-md hover:bg-primary/10"
+        onClick = {() => setSelectedTaskId(task.id)}
+      >
+        Mark Complete
+      </Button>
+    </DialogTrigger>
+
+    <DialogPortal>
+      <DialogOverlay className="backdrop-blur-sm">
+        <DialogContent>
+          <DialogTitle>Log Hours</DialogTitle>
+          <DialogDescription>
+            Enter how many hours this task took.
+          </DialogDescription>
+
+          <input
+            type="number"
+            placeholder="Enter hours"
+            className="w-full border rounded-md p-2 mt-4 mb-4"
+            value={enteredHours}
+            onChange={(e) => setEnteredHours(e.target.value)}
+          />
+
+          <div className="flex justify-end">
+            <DialogClose asChild>
+              <Button
+                className="bg-primary text-white"
+                onClick={handleSubmitLoggedHours}
+              >
+                Submit
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogContent>
+      </DialogOverlay>
+    </DialogPortal>
+  </Dialog>
+                </CardFooter>
+              </Card>
+            ))
           ) : (
             <div className="text-muted-foreground text-center py-4">
               No tasks found.
@@ -210,7 +367,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Task 1 */}
+            {/* Placeholder Task 1 */}
             <Card className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
               <div className="h-32 w-full overflow-hidden">
                 <img
@@ -243,7 +400,7 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Task 2 */}
+            {/* Placeholder Task 2 */}
             <Card className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
               <div className="h-32 w-full overflow-hidden">
                 <img
@@ -279,69 +436,7 @@ export default function Home() {
         </div>
       </div>
 
-      {selectedTaskId && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-            <h2 className="text-lg font-bold mb-4">Log Hours</h2>
-
-            <input
-              type="number"
-              placeholder="Enter hours"
-              className="w-full border rounded-md p-2 mb-4"
-              value={enteredHours}
-              onChange={(e) => setEnteredHours(e.target.value)}
-            />
-
-            <div className="flex gap-2">
-              <button
-                className="w-full bg-primary text-white py-2 rounded-md"
-                onClick={async () => {
-                  const user = auth.currentUser;
-                  if (!user || !selectedTaskId || !enteredHours) return;
-
-                  const userRef = doc(db, "users", user.uid);
-
-                  await updateDoc(userRef, {
-                    CurrentTasks: arrayRemove(selectedTaskId),
-                    credits: increment(Number(enteredHours)),
-                  });
-                  console.log(
-                    "task %s successfully removed from Current tasks",
-                    selectedTaskId,
-                  );
-
-                  await updateDoc(userRef, {
-                    CompletedTasks: arrayUnion(selectedTaskId),
-                  });
-                  console.log(
-                    "task %s successfully added to Completed tasks",
-                    selectedTaskId,
-                  );
-
-                  setCredits((prev) => prev + Number(enteredHours));
-                  setUserTaskIds((prev) =>
-                    prev.filter((id) => id !== selectedTaskId),
-                  );
-                  setSelectedTaskId(null);
-                  setEnteredHours("");
-                }}
-              >
-                Submit
-              </button>
-
-              <button
-                className="w-full border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-100"
-                onClick={() => {
-                  setSelectedTaskId(null);
-                  setEnteredHours("");
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }
