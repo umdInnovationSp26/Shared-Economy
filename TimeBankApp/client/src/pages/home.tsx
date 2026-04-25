@@ -161,6 +161,7 @@ export default function Home() {
     try {
       const userRef = doc(db, "users", user.uid);
 
+      // Updates the Hours/Credits for the user in transactions.ts
       await completeTask(user.uid, {
         ...selectedTask,
         hours: Number(enteredHours),
@@ -169,7 +170,6 @@ export default function Home() {
       await updateDoc(userRef, {
         CurrentTasks: arrayRemove(selectedTaskId),
         CompletedTasks: arrayUnion(selectedTaskId),
-        credits: increment(Number(enteredHours)),
       });
 
       setCredits((prev) => prev + Number(enteredHours));
