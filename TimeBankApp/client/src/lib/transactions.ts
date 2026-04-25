@@ -1,11 +1,4 @@
-import {
-  addDoc,
-  collection,
-  doc,
-  updateDoc,
-  increment,
-  serverTimestamp,
-} from "firebase/firestore";
+import { addDoc, collection, doc, updateDoc, increment, serverTimestamp, } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 type TaskTransactionInput = {
@@ -39,3 +32,4 @@ export async function completeTask(userId: string, task: TaskTransactionInput) {
     completedAt: serverTimestamp(),
   });
 }
+

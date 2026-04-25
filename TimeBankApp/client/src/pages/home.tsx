@@ -1,40 +1,16 @@
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import { Clock, ArrowUpRight, ArrowDownRight, MapPin } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, } from "@/components/ui/card";
+import { Clock, MapPin } from "lucide-react";
 import gardeningImg from "@/assets/images/gardening.png";
 import toolsImg from "@/assets/images/tools.png";
 import { auth, db } from "@/lib/firebase";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  arrayRemove,
-  increment,
-  arrayUnion,
-} from "firebase/firestore";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogTitle,
-  DialogContent,
-  DialogClose,
-  DialogOverlay,
-  DialogPortal,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { doc, getDoc, updateDoc, arrayRemove, arrayUnion, } from "firebase/firestore";
+import { Dialog, DialogTrigger, DialogTitle, DialogContent, DialogClose, DialogOverlay, DialogPortal, DialogDescription, } from "@/components/ui/dialog";
 import { useTasks } from "@/lib/TaskContext";
 import { completeTask } from "@/lib/transactions";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
   const [displayName, setDisplayName] = useState("");

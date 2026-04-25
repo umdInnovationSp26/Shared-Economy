@@ -4,11 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Phone, Video, Info, Plus, Loader2 } from "lucide-react";
-import {
-  collection, query, orderBy, onSnapshot,
-  addDoc, serverTimestamp, doc, updateDoc,
-  where,
-} from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, where, } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import NewChatModal from "@/components/ui/new-chat-modal";
 

@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, updateProfile, User as FirebaseUser } from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-} from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot, } from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card";
