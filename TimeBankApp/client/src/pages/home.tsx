@@ -31,7 +31,7 @@ export default function Home() {
 
     try {
       const userRef = doc(db, "users", user.uid);
-      const taskRef = doc(db,"tasks", taskId);
+      const taskRef = doc(db, "tasks", taskId);
 
       await updateDoc(userRef, {
         CurrentTasks: arrayRemove(taskId),
@@ -338,7 +338,6 @@ export default function Home() {
               onClick={() => setLocation("/tasks")}
               className="text-sm text-primary hover:underline font-medium"
             >
-
               View all
             </button>
           </div>
