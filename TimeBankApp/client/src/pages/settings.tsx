@@ -3,7 +3,7 @@ import { onAuthStateChanged, updateProfile, User as FirebaseUser } from "firebas
 import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot, } from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,16 @@ type LedgerTransaction = {
   timestamp?: any;
 };
 
+// ── Shared initials helper (same logic as layout.tsx) ─────────────────────────
+function getInitials(name: string): string {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
-
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,13 +50,10 @@ export default function Settings() {
   const [bio, setBio] = useState("");
   const [skills, setSkills] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [proximityAlerts, setProximityAlerts] = useState(true);
   const [showExactLocation, setShowExactLocation] = useState(false);
-
   const [transactions, setTransactions] = useState<LedgerTransaction[]>([]);
-
   const [saveMessage, setSaveMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -68,12 +72,9 @@ export default function Settings() {
       }
 
       try {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-
+        const userSnap = await getDoc(doc(db, "users", user.uid));
         if (userSnap.exists()) {
           const data = userSnap.data();
-
           setDisplayName(data.displayName || user.displayName || "");
           setBio(data.bio || "");
           setSkills(data.skills || "");
@@ -83,8 +84,6 @@ export default function Settings() {
           setShowExactLocation(data.showExactLocation ?? false);
         } else {
           setDisplayName(user.displayName || "");
-          setBio("");
-          setSkills("");
           setAvatarUrl(user.photoURL || "");
           setEmailNotifications(true);
           setProximityAlerts(true);
@@ -139,6 +138,8 @@ export default function Settings() {
           uid: currentUser.uid,
           email: currentUser.email ?? "",
           displayName,
+          // ── Keep displayNameLower in sync whenever displayName changes ──
+          displayNameLower: displayName.toLowerCase(),
           bio,
           skills,
           avatarUrl,
@@ -158,15 +159,7 @@ export default function Settings() {
     }
   };
 
-  const initials = displayName
-    ? displayName
-        .trim()
-        .split(" ")
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
-    : "U";
+  const initials = getInitials(displayName);
 
   const tabButtonClass = (tab: SettingsTab) =>
     `w-full justify-start font-medium ${
@@ -199,46 +192,21 @@ export default function Settings() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Settings Navigation */}
+        {/* Navigation */}
         <div className="w-full md:w-64 space-y-1">
-          <Button
-            variant={activeTab === "profile" ? "secondary" : "ghost"}
-            className={tabButtonClass("profile")}
-            onClick={() => setActiveTab("profile")}
-          >
-            <User className="mr-2 h-4 w-4" /> Profile
-          </Button>
-          <Button
-            variant={activeTab === "notifications" ? "secondary" : "ghost"}
-            className={tabButtonClass("notifications")}
-            onClick={() => setActiveTab("notifications")}
-          >
-            <Bell className="mr-2 h-4 w-4" /> Notifications
-          </Button>
-          <Button
-            variant={activeTab === "privacy" ? "secondary" : "ghost"}
-            className={tabButtonClass("privacy")}
-            onClick={() => setActiveTab("privacy")}
-          >
-            <Lock className="mr-2 h-4 w-4" /> Privacy & Security
-          </Button>
-          <Button
-            variant={activeTab === "trust" ? "secondary" : "ghost"}
-            className={tabButtonClass("trust")}
-            onClick={() => setActiveTab("trust")}
-          >
-            <Shield className="mr-2 h-4 w-4" /> Trust & Verification
-          </Button>
-          <Button
-            variant={activeTab === "ledger" ? "secondary" : "ghost"}
-            className={tabButtonClass("ledger")}
-            onClick={() => setActiveTab("ledger")}
-          >
-            <CreditCard className="mr-2 h-4 w-4" /> TimeBank Ledger
-          </Button>
+          {(["profile", "notifications", "privacy", "trust", "ledger"] as SettingsTab[]).map((tab) => {
+            const icons = { profile: User, notifications: Bell, privacy: Lock, trust: Shield, ledger: CreditCard };
+            const labels = { profile: "Profile", notifications: "Notifications", privacy: "Privacy & Security", trust: "Trust & Verification", ledger: "TimeBank Ledger" };
+            const Icon = icons[tab];
+            return (
+              <Button key={tab} variant={activeTab === tab ? "secondary" : "ghost"} className={tabButtonClass(tab)} onClick={() => setActiveTab(tab)}>
+                <Icon className="mr-2 h-4 w-4" /> {labels[tab]}
+              </Button>
+            );
+          })}
         </div>
 
-        {/* Settings Content */}
+        {/* Content */}
         <div className="flex-1 space-y-6">
           {activeTab === "profile" && (
             <Card>
@@ -257,18 +225,13 @@ export default function Settings() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <Label htmlFor="avatarUrl" className="sr-only">
-                      Avatar URL
-                    </Label>
                     <Input
-                      id="avatarUrl"
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
                       placeholder="Paste avatar image URL"
                     />
                   </div>
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="displayName">Name</Label>
                   <Input
@@ -277,7 +240,6 @@ export default function Settings() {
                     onChange={(e) => setDisplayName(e.target.value)}
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea
@@ -290,7 +252,6 @@ export default function Settings() {
                     Brief description for your profile.
                   </p>
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="skills">Key Skills (Comma separated)</Label>
                   <Input
@@ -398,15 +359,10 @@ export default function Settings() {
                 ) : (
                   <div className="space-y-3">
                     {transactions.map((tx) => (
-                      <div
-                        key={tx.id}
-                        className="rounded-lg border p-4 flex items-start justify-between"
-                      >
+                      <div key={tx.id} className="rounded-lg border p-4 flex items-start justify-between">
                         <div>
                           <p className="font-medium">{tx.title || "Untitled task"}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {tx.description || "No description"}
-                          </p>
+                          <p className="text-sm text-muted-foreground">{tx.description || "No description"}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {tx.category || "General"} •{" "}
                             {tx.timestamp?.toDate
@@ -414,13 +370,8 @@ export default function Settings() {
                               : "Pending"}
                           </p>
                         </div>
-                        <div
-                          className={`font-semibold ${
-                            tx.type === "earned" ? "text-green-600" : "text-red-500"
-                          }`}
-                        >
-                          {tx.type === "earned" ? "+" : "-"}
-                          {tx.amount || 0} hrs
+                        <div className={`font-semibold ${tx.type === "earned" ? "text-green-600" : "text-red-500"}`}>
+                          {tx.type === "earned" ? "+" : "-"}{tx.amount || 0} hrs
                         </div>
                       </div>
                     ))}

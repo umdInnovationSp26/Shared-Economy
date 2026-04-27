@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  X, Search, Loader2, Users, MessageCircle, Check, ChevronRight, ArrowLeft,
+  X, Search, Loader2, Users, MessageCircle, Check, ChevronRight, ArrowLeft, Camera,
 } from "lucide-react";
 import {
   collection, query, where, getDocs, doc,
@@ -15,36 +15,28 @@ import { db, auth } from "@/lib/firebase";
 
 type UserProfile = {
   uid: string;
-  displayName: string; // matches Firestore field name
+  displayName: string;
   email: string;
-  photoURL?: string;
+  avatarUrl?: string;
 };
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  /** Called after a chat is created so the sidebar can select it */
   onChatCreated: (chatId: string) => void;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Safe initials for any displayName format:
- * "alice"       → "AL"
- * "Alice Smith" → "AS"
- * ""            → "?"
- */
+/** Works for single-word ("alice" → "AL") and multi-word ("Alice Smith" → "AS") */
 function getInitials(displayName: string): string {
   if (!displayName) return "?";
   const parts = displayName.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   return displayName.slice(0, 2).toUpperCase();
 }
 
-/** Deterministic 1-on-1 chat ID — same pair always maps to the same doc. */
+/** Deterministic 1-on-1 chat ID */
 function dmChatId(uidA: string, uidB: string) {
   return [uidA, uidB].sort().join("_");
 }
@@ -52,7 +44,7 @@ function dmChatId(uidA: string, uidB: string) {
 // ─── UserRow ──────────────────────────────────────────────────────────────────
 
 function UserRow({
-  user,selected, onToggle, mode,
+  user, selected, onToggle, mode,
 }: {
   user: UserProfile;
   selected?: boolean;
@@ -65,6 +57,7 @@ function UserRow({
       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors rounded-xl group"
     >
       <Avatar className="h-10 w-10 shrink-0">
+        <AvatarImage src={user.avatarUrl} />
         <AvatarFallback className="bg-primary/15 text-primary font-semibold text-sm">
           {getInitials(user.displayName)}
         </AvatarFallback>
@@ -75,8 +68,8 @@ function UserRow({
       </div>
       {mode === "group" && (
         <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
-          selected 
-            ? "bg-primary border-primary" 
+          selected
+            ? "bg-primary border-primary"
             : "border-muted-foreground/30 group-hover:border-primary/50"
         }`}>
           {selected && <Check className="h-3 w-3 text-white" />}
@@ -95,20 +88,18 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
   const currentUser = auth.currentUser;
   const [tab, setTab] = useState<"dm" | "group">("dm");
 
-  // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<UserProfile[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Group state
   const [selectedUsers, setSelectedUsers] = useState<UserProfile[]>([]);
   const [groupName, setGroupName] = useState("");
+  const [groupPhotoUrl, setGroupPhotoUrl] = useState("");
   const [creating, setCreating] = useState(false);
-  const [step, setStep] = useState<"search" | "name">("search"); // group creation steps
+  const [step, setStep] = useState<"search" | "name">("search");
 
-  // Reset on open/tab change
   useEffect(() => {
     if (!open) return;
     setSearchQuery("");
@@ -116,11 +107,12 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
     setSearchError("");
     setSelectedUsers([]);
     setGroupName("");
+    setGroupPhotoUrl("");
     setStep("search");
     setCreating(false);
   }, [open, tab]);
 
-  // ── Debounced search ────────────────────────────────────────────────────────
+  // ── Debounced search using displayNameLower ─────────────────────────────────
   useEffect(() => {
     if (searchRef.current) clearTimeout(searchRef.current);
     if (!searchQuery.trim()) { setResults([]); return; }
@@ -130,28 +122,27 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
       setSearchError("");
       try {
         const usersRef = collection(db, "users");
-        const term = searchQuery.trim().toLowerCase();
+        const term = searchQuery.trim().toLowerCase(); // always lowercase for search
 
-        // Prefix search on displayNameLower + exact email match, in parallel
+        // displayNameLower enables case-insensitive prefix match
         const [byName, byEmail] = await Promise.all([
           getDocs(query(
             usersRef,
-            where("displayName", ">=", term),
-            where("displayName", "<=", term + "\uf8ff")
+            where("displayNameLower", ">=", term),
+            where("displayNameLower", "<=", term + "\uf8ff"),
           )),
           getDocs(query(usersRef, where("email", "==", term))),
         ]);
 
-        // Merge, dedupe, exclude self
         const map = new Map<string, UserProfile>();
         [...byName.docs, ...byEmail.docs].forEach((d) => {
-          if (d.id === currentUser?.uid) return; // exclude self
+          if (d.id === currentUser?.uid) return;
           const data = d.data();
           map.set(d.id, {
             uid: d.id,
             displayName: data.displayName ?? data.email ?? "Unknown",
             email: data.email ?? "",
-            photoURL: data.photoURL,
+            avatarUrl: data.avatarUrl ?? "",
           });
         });
 
@@ -167,39 +158,41 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
     return () => { if (searchRef.current) clearTimeout(searchRef.current); };
   }, [searchQuery, currentUser?.uid]);
 
-  // ── Fetch current user's displayName from Firestore ────────────────────────
-  const getMyDisplayName = async (): Promise<string> => {
-    if (!currentUser) return "User";
-    if (currentUser.displayName) return currentUser.displayName;
+  // ── Fetch current user's full profile from Firestore ───────────────────────
+  const getMyProfile = async (): Promise<{ displayName: string; avatarUrl: string }> => {
+    if (!currentUser) return { displayName: "User", avatarUrl: "" };
     const snap = await getDoc(doc(db, "users", currentUser.uid));
-    return snap.data()?.displayName ?? "User";
+    const data = snap.data();
+    return {
+      displayName: data?.displayName ?? currentUser.displayName ?? "User",
+      avatarUrl: data?.avatarUrl ?? currentUser.photoURL ?? "",
+    };
   };
 
-  // ── DM: create (idempotent) or open a 1-on-1 chat ──────────────────────────
+  // ── DM: create or open ─────────────────────────────────────────────────────
   const handleStartDM = async (otherUser: UserProfile) => {
     if (!currentUser) return;
     setCreating(true);
-
     try {
       const chatId = dmChatId(currentUser.uid, otherUser.uid);
       const chatRef = doc(db, "chats", chatId);
       const snap = await getDoc(chatRef);
 
       if (!snap.exists()) {
-        const myDisplayName = await getMyDisplayName();
+        const me = await getMyProfile();
 
-        // memberNames lets each user derive the other person's name client-side
-        // by looking up the key that is NOT their own UID.
+        // memberNames: each side looks up the OTHER uid to get the display name
+        // memberAvatars: same pattern for photo URLs — no initials stored
         await setDoc(chatRef, {
           isGroup: false,
           participantIds: [currentUser.uid, otherUser.uid],
           memberNames: {
-            [currentUser.uid]: myDisplayName,
+            [currentUser.uid]: me.displayName,
             [otherUser.uid]: otherUser.displayName,
           },
-          memberInitials: {
-            [currentUser.uid]: getInitials(myDisplayName),
-            [otherUser.uid]: getInitials(otherUser.displayName),
+          memberAvatars: {
+            [currentUser.uid]: me.avatarUrl,
+            [otherUser.uid]: otherUser.avatarUrl ?? "",
           },
           lastMessage: "",
           lastMessageTime: serverTimestamp(),
@@ -217,38 +210,42 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
     }
   };
 
-  // ── Group: toggle member ────────────────────────────────────────────────────
+  // ── Group: toggle selection ────────────────────────────────────────────────
   const toggleUser = (user: UserProfile) => {
     setSelectedUsers((prev) =>
       prev.find((u) => u.uid === user.uid)
         ? prev.filter((u) => u.uid !== user.uid)
-        : [...prev, user],
+        : [...prev, user]
     );
   };
 
-  // ── Group: create ───────────────────────────────────────────────────────────
+  // ── Group: create ──────────────────────────────────────────────────────────
   const handleCreateGroup = async () => {
     if (!currentUser || !groupName.trim() || selectedUsers.length < 2) return;
     setCreating(true);
-
     try {
       const chatId = `group_${Date.now()}_${currentUser.uid}`;
-      const myDisplayName = await getMyDisplayName();
+      const allMemberIds = [currentUser.uid, ...selectedUsers.map((u) => u.uid)];
+      const me = await getMyProfile();
 
-      const memberNames: Record<string, string> = { [currentUser.uid]: myDisplayName };
-      const memberInitials: Record<string, string> = { [currentUser.uid]: getInitials(myDisplayName) };
-      selectedUsers.forEach((u) => {
-        memberNames[u.uid] = u.displayName;
-        memberInitials[u.uid] = getInitials(u.displayName);
-      });
+      const memberNames: Record<string, string> = {
+        [currentUser.uid]: me.displayName,
+        ...Object.fromEntries(selectedUsers.map((u) => [u.uid, u.displayName])),
+      };
+      // Store avatarUrls — initials are derived in the UI from memberNames
+      const memberAvatars: Record<string, string> = {
+        [currentUser.uid]: me.avatarUrl,
+        ...Object.fromEntries(selectedUsers.map((u) => [u.uid, u.avatarUrl ?? ""])),
+      };
 
       await setDoc(doc(db, "chats", chatId), {
         isGroup: true,
         name: groupName.trim(),
-        groupInitials: groupName.trim().slice(0, 2).toUpperCase(),
-        participantIds: [currentUser.uid, ...selectedUsers.map((u) => u.uid)],
+        // groupPhotoUrl can be empty string — UI falls back to initials
+        groupPhotoUrl: groupPhotoUrl.trim(),
+        participantIds: allMemberIds,
         memberNames,
-        memberInitials,
+        memberAvatars,
         createdBy: currentUser.uid,
         lastMessage: "",
         lastMessageTime: serverTimestamp(),
@@ -266,16 +263,15 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
 
   if (!open) return null;
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // Group photo preview initials (before name is set, use "GR" placeholder)
+  const groupPreviewInitials = groupName.trim()
+    ? groupName.trim().slice(0, 2).toUpperCase()
+    : "GR";
+
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-in fade-in duration-200"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-in fade-in duration-200" onClick={onClose} />
 
-      {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
           className="pointer-events-auto w-full max-w-md bg-card rounded-2xl shadow-2xl border border-border/50 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
@@ -317,10 +313,33 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
           {/* Body */}
           <div className="px-4 pb-5">
 
-            {/* GROUP — Step 2: name the group */}
+            {/* GROUP — Step 2: name + photo */}
             {tab === "group" && step === "name" ? (
               <div className="pt-4 space-y-5">
-                {/* Selected members preview */}
+
+                {/* Group photo picker */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative">
+                    <Avatar className="h-20 w-20 border-2 border-primary/20">
+                      <AvatarImage src={groupPhotoUrl} />
+                      <AvatarFallback className="text-2xl bg-blue-100 text-blue-700 font-bold">
+                        {groupPreviewInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    {/* Camera badge */}
+                    <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-primary flex items-center justify-center border-2 border-card">
+                      <Camera className="h-3.5 w-3.5 text-primary-foreground" />
+                    </div>
+                  </div>
+                  <Input
+                    placeholder="Group photo URL (optional)"
+                    value={groupPhotoUrl}
+                    onChange={(e) => setGroupPhotoUrl(e.target.value)}
+                    className="h-9 text-sm text-center"
+                  />
+                </div>
+
+                {/* Selected members */}
                 <div className="flex flex-wrap gap-2">
                   {selectedUsers.map((u) => (
                     <div key={u.uid} className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-2.5 py-1.5 rounded-full">
@@ -332,7 +351,7 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
                   ))}
                 </div>
 
-                {/* Group name input */}
+                {/* Group name */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Group Name</label>
                   <Input
@@ -344,16 +363,16 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
                     className="h-11"
                   />
                 </div>
+
                 <Button onClick={handleCreateGroup} disabled={!groupName.trim() || creating} className="w-full h-11 rounded-xl font-semibold">
                   {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Users className="h-4 w-4 mr-2" />}
                   Create Group · {selectedUsers.length + 1} members
                 </Button>
               </div>
             ) : (
-              /* DM or GROUP Step 1: search */
+              /* DM or GROUP — Step 1: search */
               <div className="pt-3 space-y-3">
 
-                {/* Selected chips (group only) */}
                 {tab === "group" && selectedUsers.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {selectedUsers.map((u) => (
@@ -367,7 +386,6 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
                   </div>
                 )}
 
-                {/* Search input */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
@@ -380,7 +398,6 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
                   {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
                 </div>
 
-                {/* Results */}
                 <div className="min-h-[180px] max-h-[280px] overflow-y-auto -mx-1">
                   {searchError ? (
                     <p className="text-center text-sm text-destructive py-8">{searchError}</p>
@@ -422,7 +439,6 @@ export default function NewChatModal({ open, onClose, onChatCreated }: Props) {
         </div>
       </div>
 
-      {/* Full-screen creating overlay */}
       {creating && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-sm">
           <div className="bg-card rounded-2xl px-8 py-6 flex flex-col items-center gap-3 shadow-xl">

@@ -15,7 +15,6 @@ export default function SignupPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -28,7 +27,6 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 👇 IMPORTANT (your old code didn't do this)
       await updateProfile(user, {
         displayName: displayName || "New User",
       });
@@ -37,6 +35,8 @@ export default function SignupPage() {
         uid: user.uid,
         email: user.email ?? "",
         displayName: displayName || "New User",
+        // ── displayNameLower enables case-insensitive prefix search in chat ──
+        displayNameLower: (displayName || "New User").toLowerCase(),
         credits: 0,
         bio: "",
         createdAt: serverTimestamp(),
@@ -69,7 +69,6 @@ export default function SignupPage() {
               onChange={(e) => setDisplayName(e.target.value)}
               required
             />
-
             <Input
               type="email"
               placeholder="Email"
@@ -77,7 +76,6 @@ export default function SignupPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-
             <Input
               type="password"
               placeholder="Password"
@@ -85,9 +83,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-
             {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
-
             <Button className="w-full" disabled={isLoading}>
               {isLoading ? "Creating..." : "Create Account"}
             </Button>
