@@ -87,6 +87,8 @@ export default function NewPost() {
       radius,
       isAssigned: false,
       madeBy: data.displayName,
+      actualTime: 0,
+      isCompleted: false,
     });
 
     // Simulate API delay FIREBASE IMPLEMENTATION HERE!!

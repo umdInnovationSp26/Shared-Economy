@@ -28,13 +28,6 @@ export default function About() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="max-w-2xl">
-              <Badge
-                className="mb-6 bg-primary/10 text-primary hover:bg-primary/20 border-none px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-                data-testid="badge-hero-status"
-              >
-                <HeartHandshake className="w-4 h-4 mr-2 inline-block" />
-                Join 1,200+ neighbors trading time
-              </Badge>
               <h1
                 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.1] mb-6 text-foreground"
                 data-testid="text-hero-title"
@@ -71,7 +64,7 @@ export default function About() {
                 {!user && (
                   <>
                     <Link href="/login">
-                     <Button
+                      <Button
                         size="lg"
                         className="rounded-full text-base h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100"
                         data-testid="button-hero-primary"
@@ -92,23 +85,6 @@ export default function About() {
                     </Link>
                   </>
                 )}
-              </div>
-
-              <div className="mt-10 flex items-center gap-4 text-sm text-muted-foreground font-medium">
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-full border-2 border-background bg-secondary flex items-center justify-center overflow-hidden"
-                    >
-                      <img
-                        src={`https://i.pravatar.cc/100?img=${i + 10}`}
-                        alt="User avatar"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <p>Over 5,000 hours exchanged this month</p>
               </div>
             </div>
 
@@ -178,10 +154,11 @@ export default function About() {
 
             <Card className="bg-card border-none shadow-sm hover:shadow-md transition-shadow rounded-3xl relative overflow-hidden group">
               <CardContent className="p-8">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{color:"#ffca80", backgroundColor:"#fff4e6"}}>
-                  <span className="text-2xl font-display font-bold">
-                    2
-                  </span>
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"
+                  style={{ color: "#ffca80", backgroundColor: "#fff4e6" }}
+                >
+                  <span className="text-2xl font-display font-bold">2</span>
                 </div>
                 <h3 className="text-xl font-bold mb-3">Bank Your Hours</h3>
                 <p className="text-muted-foreground leading-relaxed">
@@ -349,20 +326,24 @@ export default function About() {
 
             {/* Service Card 3 - Need */}
             <Card
-              className="overflow-hidden rounded-3xl border border-accent/20 shadow-sm hover:shadow-lg transition-all group cursor-pointer bg-accent/5"
+              className="overflow-hidden rounded-3xl border border-primary/20 shadow-sm hover:shadow-lg transition-all group cursor-pointer"
               data-testid="card-service-3"
             >
-              <div className="h-32 overflow-hidden relative bg-accent/10 flex items-center justify-center border-b border-accent/10">
+              <div className="h-48 overflow-hidden relative bg-secondary/10 flex items-center justify-center border-b border-secondary/10">
                 <Badge
                   variant="outline"
-                  className="absolute top-4 left-4 z-10 bg-white/90 text-accent-foreground border-accent shadow-sm rounded-full backdrop-blur-sm px-3 py-1 font-bold"
+                  className="absolute top-4 left-4 z-10 bg-white/90 text-secondary-foreground border-secondary shadow-sm rounded-full backdrop-blur-sm px-3 py-1 font-bold"
                 >
                   REQUEST
                 </Badge>
-                <div className="absolute top-4 right-4 z-10 bg-accent/90 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm flex items-center">
+                <div className="absolute top-4 right-4 z-10 bg-primary/90 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm flex items-center">
                   <Clock className="w-3 h-3 mr-1" /> 3 hrs
                 </div>
-                <PenTool className="w-12 h-12 text-accent/40" />
+                <img
+                  src={teachingImage}
+                  alt="Tutoring"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
               </div>
               <CardContent className="p-6 relative">
                 <div className="flex items-center gap-3 mb-4">
@@ -376,20 +357,20 @@ export default function About() {
                     <p className="text-xs text-muted-foreground">New Member</p>
                   </div>
                 </div>
-                <h3 className="text-xl font-bold mb-2 group-hover:text-accent transition-colors">
+                <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
                   Help painting living room
                 </h3>
                 <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
                   Just moved in and need an extra set of hands to paint my
                   living room. I have all supplies and will provide pizza!
                 </p>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-accent/10">
-                  <span className="text-xs font-medium bg-white px-2 py-1 rounded-md text-accent-foreground border border-accent/20">
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
+                  <span className="text-xs font-medium bg-secondary px-2 py-1 rounded-md text-secondary-foreground border border-secondary/20">
                     Needs Help
                   </span>
                   <Button
                     size="sm"
-                    className="rounded-full bg-accent text-white hover:bg-accent/90 shadow-md shadow-accent/20 transition-colors"
+                    className="rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
                   >
                     Offer Help
                   </Button>
