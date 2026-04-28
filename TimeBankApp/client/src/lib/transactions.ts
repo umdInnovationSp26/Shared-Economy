@@ -1,5 +1,5 @@
-import { addDoc, collection, doc, updateDoc, increment, serverTimestamp, } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { addDoc, collection, doc, updateDoc, increment, serverTimestamp, arrayUnion } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
 
 type TaskTransactionInput = {
   id: string;
@@ -32,4 +32,27 @@ export async function completeTask(userId: string, task: TaskTransactionInput) {
     completedAt: serverTimestamp(),
   });
 }
+
+export const handleAssignment = async (taskId: string) => {
+  const user = auth.currentUser;
+  if (!user) return;
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const taskRef = doc(db,"tasks", taskId);
+
+    await updateDoc(userRef, {
+      CurrentTasks: arrayUnion(taskId),
+    });
+    console.log("task %s added to user", taskId);
+    
+    await updateDoc(taskRef, {
+      isAssigned: true
+    });
+
+    console.log("task %s set to true", taskId);
+
+  } catch (error) {
+    console.error("Error assigning task:", error);
+  }
+};
 
