@@ -8,33 +8,11 @@ import { Clock, MapPin, Search, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Task, } from "@/lib/TaskContext";
 import { Dialog, DialogTrigger, DialogTitle, DialogContent, DialogClose, DialogOverlay, DialogPortal, DialogDescription, } from "@/components/ui/dialog";
+import { handleAssignment } from "@/lib/transactions";
+import { db } from "@/lib/firebase";
+import { collection, doc, getDocs, query, where, } from "firebase/firestore";
 import "./tasks.css";
 
-import { auth, db } from "@/lib/firebase";
-import { arrayUnion, collection, doc, getDocs, query, updateDoc, where, } from "firebase/firestore";
-
-const handleAssignment = async (taskId: string) => {
-  const user = auth.currentUser;
-  if (!user) return;
-  try {
-    const userRef = doc(db, "users", user.uid);
-    const taskRef = doc(db,"tasks", taskId);
-
-    await updateDoc(userRef, {
-      CurrentTasks: arrayUnion(taskId),
-    });
-    console.log("task %s added to user", taskId);
-    
-    await updateDoc(taskRef, {
-      isAssigned: true
-    });
-
-    console.log("task %s set to true", taskId);
-
-  } catch (error) {
-    console.error("Error assigning task:", error);
-  }
-};
 
 export default function Tasks() {
   const [search, setSearch] = useState("");
